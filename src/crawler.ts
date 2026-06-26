@@ -12,6 +12,9 @@ export interface MatchData {
 	loseOdds: string;
 	handicapHomeOdds: string;
 	handicapAwayOdds: string;
+	totalGoals: string;
+	overOdds: string;
+	underOdds: string;
 }
 
 export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]> {
@@ -70,6 +73,9 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 				let loseOdds = '';
 				let handicapHomeOdds = '';
 				let handicapAwayOdds = '';
+				let totalGoals = '';
+				let overOdds = '';
+				let underOdds = '';
 
 				lis.forEach((li) => {
 					const text = li.textContent?.trim() || '';
@@ -129,6 +135,10 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 								}
 								handicap = handicapValue;
 								handicapAwayOdds = values[2];
+							} else if (oddsType === 'ou' && values.length >= 3) {
+								overOdds = values[0];
+								totalGoals = values[1];
+								underOdds = values[2];
 							}
 						});
 					}
@@ -147,6 +157,9 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 						loseOdds,
 						handicapHomeOdds,
 						handicapAwayOdds,
+						totalGoals,
+						overOdds,
+						underOdds,
 					});
 				}
 			});
@@ -167,8 +180,8 @@ export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Pro
 
 	for (const match of matches) {
 		await db.prepare(
-			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, createdAt)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, totalGoals, overOdds, underOdds, createdAt)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		).bind(
 			match.id,
 			match.league,
@@ -181,6 +194,9 @@ export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Pro
 			match.loseOdds,
 			match.handicapHomeOdds,
 			match.handicapAwayOdds,
+			match.totalGoals,
+			match.overOdds,
+			match.underOdds,
 			now
 		).run();
 	}
