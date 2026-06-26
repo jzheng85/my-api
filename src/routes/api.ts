@@ -17,6 +17,6 @@ POST("/post", async (request) => {
 });
 
 GET("/api/db", async (_,env) => {
-	const result = await env.DB.prepare("SELECT Id, CustomerName, OrderDate FROM [Order] ORDER BY ShippedDate DESC LIMIT 100").run() as OrderRow[];
+	const result = await env.DB.prepare("SELECT Id, CustomerName, OrderDate FROM [Order] LIMIT 100").run() as OrderRow[];
 	return Response.json({ message: "Hello World!", result: result });
 });
