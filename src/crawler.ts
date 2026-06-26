@@ -170,27 +170,27 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 												}
 											});
 											if (oddsType === '1x2' && values.length >= 3) {
-												winOdds = values[0];
-												drawOdds = values[1];
-												loseOdds = values[2];
+												winOdds = (parseFloat(values[0]) + 1).toFixed(2);
+												drawOdds = (parseFloat(values[1]) + 1).toFixed(2);
+												loseOdds = (parseFloat(values[2]) + 1).toFixed(2);
 											} else if (oddsType === 'ah' && values.length >= 3) {
-												handicapHomeOdds = values[0];
+												handicapHomeOdds = (parseFloat(values[0]) + 1).toFixed(2);
 												let handicapValue = values[1];
 												const pkSpan = div.querySelector('span[d-pk]');
 												if (pkSpan) {
 													const pkValue = parseFloat(pkSpan.getAttribute('d-pk') || '0');
 													if (pkValue > 0) {
-														handicapValue = '+' + handicapValue;
-													} else if (pkValue < 0) {
 														handicapValue = '-' + handicapValue;
+													} else if (pkValue < 0) {
+														handicapValue = '+' + handicapValue;
 													}
 												}
 												handicap = handicapValue;
-												handicapAwayOdds = values[2];
+												handicapAwayOdds = (parseFloat(values[2]) + 1).toFixed(2);
 											} else if (oddsType === 'ou' && values.length >= 3) {
-												overOdds = values[0];
+												overOdds = (parseFloat(values[0]) + 1).toFixed(2);
 												totalGoals = values[1];
-												underOdds = values[2];
+												underOdds = (parseFloat(values[2]) + 1).toFixed(2);
 											}
 										});
 									}
