@@ -107,7 +107,7 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 				);
 				
 				const status = won ? "won" : "lost";
-				const payout = won ? Math.floor((bet.points as number) * (bet.odds_at_bet as number)) : 0;
+				const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 				
 				batchOperations.push(
 					db.prepare(

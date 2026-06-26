@@ -170,11 +170,11 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 												}
 											});
 											if (oddsType === '1x2' && values.length >= 3) {
-												winOdds = (parseFloat(values[0]) + 1).toFixed(2);
-												drawOdds = (parseFloat(values[1]) + 1).toFixed(2);
-												loseOdds = (parseFloat(values[2]) + 1).toFixed(2);
+												winOdds = values[0];
+												drawOdds = values[1];
+												loseOdds = values[2];
 											} else if (oddsType === 'ah' && values.length >= 3) {
-												handicapHomeOdds = (parseFloat(values[0]) + 1).toFixed(2);
+												handicapHomeOdds = values[0];
 												let handicapValue = values[1];
 												const pkSpan = div.querySelector('span[d-pk]');
 												if (pkSpan) {
@@ -186,11 +186,11 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 													}
 												}
 												handicap = handicapValue;
-												handicapAwayOdds = (parseFloat(values[2]) + 1).toFixed(2);
+												handicapAwayOdds = values[2];
 											} else if (oddsType === 'ou' && values.length >= 3) {
-												overOdds = (parseFloat(values[0]) + 1).toFixed(2);
+												overOdds = values[0];
 												totalGoals = values[1];
-												underOdds = (parseFloat(values[2]) + 1).toFixed(2);
+												underOdds = values[2];
 											}
 										});
 									}

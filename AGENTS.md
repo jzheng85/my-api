@@ -71,6 +71,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 - 中奖积分自动返还（投注积分 × 赔率）
 - 支持手动结算和批量结算
 - **关键特性**：结算时使用投注时的盘口值（handicap_at_bet/total_goals_at_bet），而非当前盘口，确保公平性
+- **赔率计算**：网站显示的赔率为净赔率（不含本金），结算时返还 = 投注积分 × (赔率 + 1)（含本金）
 - **比赛结束判定**：依赖 match_status 字段，不依赖比分（允许0:0终场）
 
 ## D1 数据库表结构

@@ -219,7 +219,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 			);
 			
 			const status = won ? "won" : "lost";
-			const payout = won ? Math.floor((bet.points as number) * (bet.odds_at_bet as number)) : 0;
+			const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 			
 			batchOperations.push(
 				env.DB.prepare(
@@ -292,7 +292,7 @@ POST("/api/bets/settle-all", async (request, env) => {
 				);
 				
 				const status = won ? "won" : "lost";
-				const payout = won ? Math.floor((bet.points as number) * (bet.odds_at_bet as number)) : 0;
+				const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 				
 				batchOperations.push(
 					env.DB.prepare(
