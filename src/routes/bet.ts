@@ -40,7 +40,7 @@ function determineMatchResult(score: string): string {
 	return "draw";
 }
 
-function isBetWon(betType: string, betValue: string, score: string, handicap: string, totalGoals: string): boolean {
+function isBetWon(betType: string, betValue: string, score: string, handicapAtBet: string, totalGoalsAtBet: string): boolean {
 	const { home, away } = parseScore(score);
 	
 	if (betType === "1x2") {
@@ -49,7 +49,7 @@ function isBetWon(betType: string, betValue: string, score: string, handicap: st
 	}
 	
 	if (betType === "ah") {
-		const hc = parseHandicap(handicap);
+		const hc = parseHandicap(handicapAtBet);
 		const adjustedHome = home + hc;
 		
 		if (betValue === "home") {
@@ -61,7 +61,7 @@ function isBetWon(betType: string, betValue: string, score: string, handicap: st
 	
 	if (betType === "ou") {
 		const total = home + away;
-		const line = parseTotalGoals(totalGoals);
+		const line = parseTotalGoals(totalGoalsAtBet);
 		
 		if (betValue === "over") {
 			return total > line;
@@ -114,6 +114,8 @@ POST("/api/bets", async (request, env) => {
 		}
 		
 		let oddsAtBet = 0;
+		let handicapAtBet = '';
+		let totalGoalsAtBet = '';
 		
 		if (betType === '1x2') {
 			if (betValue === 'win') {
@@ -129,12 +131,14 @@ POST("/api/bets", async (request, env) => {
 			} else if (betValue === 'away') {
 				oddsAtBet = parseFloat(match.handicapAwayOdds as string) || 0;
 			}
+			handicapAtBet = match.handicap as string || '';
 		} else if (betType === 'ou') {
 			if (betValue === 'over') {
 				oddsAtBet = parseFloat(match.overOdds as string) || 0;
 			} else if (betValue === 'under') {
 				oddsAtBet = parseFloat(match.underOdds as string) || 0;
 			}
+			totalGoalsAtBet = match.totalGoals as string || '';
 		}
 		
 		if (oddsAtBet <= 0) {
@@ -145,9 +149,9 @@ POST("/api/bets", async (request, env) => {
 			env.DB.prepare("UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 				.bind(points, userId),
 			env.DB.prepare(
-				"INSERT INTO bets (user_id, match_id, bet_type, bet_value, points, odds_at_bet) VALUES (?, ?, ?, ?, ?, ?)"
+				"INSERT INTO bets (user_id, match_id, bet_type, bet_value, points, odds_at_bet, handicap_at_bet, total_goals_at_bet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)
-				.bind(userId, matchId, betType, betValue, points, oddsAtBet)
+				.bind(userId, matchId, betType, betValue, points, oddsAtBet, handicapAtBet, totalGoalsAtBet)
 		]);
 		
 		const betResult = batch[1] as any;
@@ -160,6 +164,8 @@ POST("/api/bets", async (request, env) => {
 			betValue,
 			points,
 			oddsAtBet,
+			handicapAtBet,
+			totalGoalsAtBet,
 			status: 'pending'
 		}, { status: 201 });
 	} catch (error) {
@@ -182,7 +188,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 			return Response.json({ error: "比赛不存在" }, { status: 404 });
 		}
 		
-		if (!match.score || (match.score as string) === "0:0") {
+		if (!match.score || (match.score as string) === "") {
 			return Response.json({ error: "比赛尚未结束或没有比分" }, { status: 400 });
 		}
 		
@@ -208,8 +214,8 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 				bet.bet_type,
 				bet.bet_value,
 				match.score,
-				match.handicap,
-				match.totalGoals
+				bet.handicap_at_bet,
+				bet.total_goals_at_bet
 			);
 			
 			const status = won ? "won" : "lost";
@@ -252,7 +258,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 POST("/api/bets/settle-all", async (request, env) => {
 	try {
 		const endedMatches = await env.DB.prepare(
-			"SELECT id, score, handicap, totalGoals FROM matches WHERE match_status = 'live' AND score IS NOT NULL AND score != '0:0' AND score != ''"
+			"SELECT id, score FROM matches WHERE match_status = 'ended' AND score IS NOT NULL AND score != ''"
 		)
 			.all();
 		
@@ -281,8 +287,8 @@ POST("/api/bets/settle-all", async (request, env) => {
 					bet.bet_type,
 					bet.bet_value,
 					match.score,
-					match.handicap,
-					match.totalGoals
+					bet.handicap_at_bet,
+					bet.total_goals_at_bet
 				);
 				
 				const status = won ? "won" : "lost";
@@ -302,11 +308,6 @@ POST("/api/bets/settle-all", async (request, env) => {
 					);
 				}
 			}
-			
-			batchOperations.push(
-				env.DB.prepare("UPDATE matches SET match_status = 'ended' WHERE id = ?")
-					.bind(match.id)
-			);
 			
 			await env.DB.batch(batchOperations);
 			totalSettled += bets.length;

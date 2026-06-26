@@ -42,7 +42,7 @@ function parseTotalGoals(totalGoals: string): number {
 	return parseFloat(totalGoals);
 }
 
-function isBetWon(betType: string, betValue: string, score: string, handicap: string, totalGoals: string): boolean {
+function isBetWon(betType: string, betValue: string, score: string, handicapAtBet: string, totalGoalsAtBet: string): boolean {
 	const { home, away } = parseScore(score);
 	
 	if (betType === "1x2") {
@@ -51,7 +51,7 @@ function isBetWon(betType: string, betValue: string, score: string, handicap: st
 	}
 	
 	if (betType === "ah") {
-		const hc = parseHandicap(handicap);
+		const hc = parseHandicap(handicapAtBet);
 		const adjustedHome = home + hc;
 		
 		if (betValue === "home") {
@@ -63,7 +63,7 @@ function isBetWon(betType: string, betValue: string, score: string, handicap: st
 	
 	if (betType === "ou") {
 		const total = home + away;
-		const line = parseTotalGoals(totalGoals);
+		const line = parseTotalGoals(totalGoalsAtBet);
 		
 		if (betValue === "over") {
 			return total > line;
@@ -78,7 +78,7 @@ function isBetWon(betType: string, betValue: string, score: string, handicap: st
 async function settleCompletedMatches(db: D1Database): Promise<void> {
 	try {
 		const endedMatches = await db.prepare(
-			"SELECT id, score, handicap, totalGoals FROM matches WHERE match_status = 'live' AND score IS NOT NULL AND score != '0:0' AND score != ''"
+			"SELECT id, score FROM matches WHERE match_status = 'ended' AND score IS NOT NULL AND score != ''"
 		).all();
 		
 		const matches = endedMatches.results || [];
@@ -102,8 +102,8 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 					bet.bet_type,
 					bet.bet_value,
 					match.score,
-					match.handicap,
-					match.totalGoals
+					bet.handicap_at_bet,
+					bet.total_goals_at_bet
 				);
 				
 				const status = won ? "won" : "lost";
@@ -122,11 +122,6 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 					);
 				}
 			}
-			
-			batchOperations.push(
-				db.prepare("UPDATE matches SET match_status = 'ended' WHERE id = ?")
-					.bind(match.id)
-			);
 			
 			await db.batch(batchOperations);
 			console.log(`Settled ${bets.length} bets for match ${match.id}`);

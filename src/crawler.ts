@@ -109,7 +109,7 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 								return;
 							}
 							
-							const uls = container.querySelectorAll('ul.r0item.r0data[d-st="0"]');
+							const uls = container.querySelectorAll('ul.r0item.r0data[data-ai-vis="1"]');
 							const matches: MatchData[] = [];
 							
 							uls.forEach(ul => {
