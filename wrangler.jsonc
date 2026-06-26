@@ -20,7 +20,10 @@
 		"database_name": "my-db",
 		"database_id": "fddef3c9-c1d5-4cde-a850-d2c298d360dd"
 		}
-	]
+	],
+	"browser": {
+		"binding": "MYBROWSER",
+	},
 	/**
 	 * Smart Placement
 	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
