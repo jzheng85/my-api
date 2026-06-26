@@ -13,6 +13,13 @@
 	"upload_source_maps": true,
 	"compatibility_flags": [
 		"nodejs_compat"
+	],
+	"d1_databases": [
+		{
+		"binding": "DB", // available in your Worker on env.DB
+		"database_name": "my-db",
+		"database_id": "fddef3c9-c1d5-4cde-a850-d2c298d360dd"
+		}
 	]
 	/**
 	 * Smart Placement
@@ -41,5 +48,5 @@
 	 * Service Bindings (communicate between multiple Workers)
 	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
 	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+	// "services": [  {   "binding": "DB",   "service": "my-db"  } ]
 }
