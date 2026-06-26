@@ -9,7 +9,9 @@ declare namespace Cloudflare {
 	}
 	interface Env extends __BaseEnv_Env {}
 }
-interface Env extends __BaseEnv_Env {}
+interface Env extends __BaseEnv_Env {
+	[x: string]: any;
+}
 
 // Begin runtime types
 /*! *****************************************************************************
