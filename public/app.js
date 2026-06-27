@@ -162,7 +162,13 @@ function renderMatches(matches) {
     const container = document.getElementById('matchesList');
     
     if (matches.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">暂无比赛数据</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚽</div>
+                <h3>暂无比赛数据</h3>
+                <p>当前没有可投注的比赛</p>
+            </div>
+        `;
         return;
     }
 
@@ -174,8 +180,8 @@ function renderMatches(matches) {
         
         if (!isEnded) {
             oddsSection = `
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">胜平负 (1x2)</div>
+                <div class="odds-section">
+                    <div class="odds-title">胜平负 (1x2)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'win', ${match.winOdds})">
                             <div class="odds-label">主胜</div>
@@ -193,8 +199,8 @@ function renderMatches(matches) {
                 </div>
                 
                 ${match.handicap ? `
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">让球 (AH)</div>
+                <div class="odds-section">
+                    <div class="odds-title">让球 (AH)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ah', 'home', ${match.handicapHomeOdds})">
                             <div class="odds-label">主队</div>
@@ -212,8 +218,8 @@ function renderMatches(matches) {
                 ` : ''}
                 
                 ${match.totalGoals ? `
-                <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">大小球 (OU)</div>
+                <div class="odds-section">
+                    <div class="odds-title">大小球 (OU)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'over', ${match.overOdds})">
                             <div class="odds-label">大球</div>
@@ -352,7 +358,13 @@ function renderBets(bets) {
     const container = document.getElementById('betsList');
     
     if (bets.length === 0) {
-        container.innerHTML = '<div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">暂无投注记录</div>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                <h3>暂无投注记录</h3>
+                <p>快去投注一场比赛吧</p>
+            </div>
+        `;
         return;
     }
 
@@ -405,7 +417,7 @@ async function updateUserInfo() {
             const data = await response.json();
             user.points = data.points;
             localStorage.setItem('user', JSON.stringify(user));
-            document.getElementById('pointsBadge').textContent = `积分: ${data.points}`;
+            document.getElementById('pointsBadge').textContent = data.points;
         }
     } catch (error) {
         console.error('更新用户信息失败', error);

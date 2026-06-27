@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>体育赛事投注系统</title>
+    <title>61X趣味积分竞猜</title>
     <style>
         * {
             margin: 0;
@@ -11,187 +11,258 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --primary-color: #4285F4;
+            --primary-dark: #3367D6;
+            --primary-light: #5BA3FB;
+            --bg-color: #F5F5F5;
+            --card-bg: #FFFFFF;
+            --text-primary: #202124;
+            --text-secondary: #5F6368;
+            --text-light: #9CA3AF;
+            --border-color: #E0E0E0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-hover: 0 4px 6px rgba(0,0,0,0.12), 0 4px 8px rgba(0,0,0,0.24);
+            --shadow-lg: 0 10px 20px rgba(0,0,0,0.15), 0 6px 6px rgba(0,0,0,0.2);
+            --radius: 8px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #e8f4fc 0%, #f0f8ff 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
             min-height: 100vh;
-            color: #1a365d;
+            color: var(--text-primary);
+            line-height: 1.6;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 24px;
         }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
-            border-bottom: 2px solid #0066cc;
-            margin-bottom: 30px;
-            background: white;
-            border-radius: 12px;
-            padding: 20px 30px;
-            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
+            padding: 16px 24px;
+            background: var(--card-bg);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow);
+            margin-bottom: 32px;
         }
 
         header h1 {
-            font-size: 24px;
-            color: #0066cc;
+            font-size: 22px;
+            font-weight: 500;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            border-radius: var(--radius);
+            margin-right: 12px;
+            font-size: 18px;
+            color: white;
+            font-weight: bold;
+            vertical-align: middle;
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 16px;
         }
 
         .points-badge {
-            background: linear-gradient(90deg, #0066cc, #00a8e6);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            padding: 8px 20px;
+            border-radius: 24px;
+            font-weight: 600;
             color: white;
+            font-size: 14px;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
+        }
+
+        .points-icon {
+            font-size: 16px;
         }
 
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--radius);
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
         }
 
         .btn-primary {
-            background: linear-gradient(90deg, #0066cc, #00a8e6);
+            background: var(--primary-color);
             color: white;
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 102, 204, 0.4);
+            background: var(--primary-dark);
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
         }
 
         .btn-secondary {
-            background: rgba(0, 102, 204, 0.1);
-            color: #0066cc;
-            border: 1px solid #0066cc;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
         }
 
         .btn-secondary:hover {
-            background: rgba(0, 102, 204, 0.2);
+            background: rgba(0,0,0,0.04);
+            border-color: var(--text-light);
         }
 
         .btn-danger {
-            background: linear-gradient(90deg, #ef4444, #dc2626);
+            background: #EA4335;
             color: white;
         }
 
+        .btn-danger:hover {
+            background: #D93025;
+            box-shadow: 0 2px 8px rgba(234, 67, 53, 0.3);
+        }
+
         .card {
-            background: white;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
             padding: 24px;
             margin-bottom: 24px;
-            border: 2px solid #0066cc;
-            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
 
         .card h2 {
             font-size: 18px;
+            font-weight: 500;
             margin-bottom: 20px;
-            color: #0066cc;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
         }
 
         .form-group {
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
 
         .form-group label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-size: 14px;
-            color: #4a5568;
-            font-weight: 600;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 12px;
-            background: #f0f8ff;
-            border: 2px solid #0066cc;
-            border-radius: 8px;
-            color: #1a365d;
+            padding: 12px 16px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            color: var(--text-primary);
             font-size: 14px;
+            transition: all 0.2s ease;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #00a8e6;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-light);
         }
 
         .match-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
             gap: 20px;
         }
 
         .match-card {
-            background: white;
-            border-radius: 12px;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
             padding: 20px;
-            border: 2px solid #0066cc;
-            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .match-card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
         }
 
         .match-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 16px;
         }
 
         .match-league {
             font-size: 12px;
             color: white;
-            background: #0066cc;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            background: var(--primary-color);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .match-status {
             font-size: 12px;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .status-pending {
-            background: rgba(251, 191, 36, 0.2);
-            color: #d97706;
+            background: rgba(251, 191, 36, 0.1);
+            color: #D97706;
         }
 
         .status-live {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
+            background: rgba(34, 197, 94, 0.1);
+            color: #16A34A;
             animation: pulse 2s infinite;
         }
 
         .status-ended {
-            background: rgba(156, 163, 175, 0.2);
-            color: #6b7280;
+            background: rgba(156, 163, 175, 0.1);
+            color: #6B7280;
         }
 
         @keyframes pulse {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.6; }
         }
 
         .match-teams {
@@ -199,6 +270,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
         }
 
         .team {
@@ -209,104 +282,141 @@
         .team-name {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 8px;
-            color: #1a365d;
+            margin-bottom: 4px;
+            color: var(--text-primary);
         }
 
         .match-score {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0066cc;
-            padding: 0 20px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+            padding: 0 24px;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .match-time {
+            font-size: 12px;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
+        .odds-section {
+            margin-bottom: 16px;
+        }
+
+        .odds-title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .odds-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
         }
 
         .odds-item {
-            background: #f0f8ff;
-            padding: 12px;
-            border-radius: 8px;
+            background: var(--bg-color);
+            padding: 14px 8px;
+            border-radius: var(--radius);
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             border: 2px solid transparent;
         }
 
         .odds-item:hover {
-            background: #e8f4fc;
-            border-color: #0066cc;
+            background: rgba(66, 133, 244, 0.08);
+            border-color: rgba(66, 133, 244, 0.3);
         }
 
         .odds-item.selected {
-            border-color: #0066cc;
-            background: rgba(0, 102, 204, 0.15);
+            border-color: var(--primary-color);
+            background: rgba(66, 133, 244, 0.12);
         }
 
         .odds-label {
             font-size: 12px;
-            color: #4a5568;
+            color: var(--text-secondary);
             margin-bottom: 4px;
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .odds-value {
-            font-size: 18px;
-            font-weight: bold;
-            color: #0066cc;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary-color);
         }
 
         .odds-handicap {
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(90deg, #0066cc, #00a8e6);
-            border-radius: 8px;
-            padding: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            border-radius: var(--radius);
+            padding: 14px 8px;
             text-align: center;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
         }
 
         .handicap-value {
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 700;
             color: white;
         }
 
         .bet-section {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 2px solid #0066cc;
+            border-top: 1px solid var(--border-color);
         }
 
         .bet-input {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: center;
         }
 
         .bet-input input {
             flex: 1;
-            padding: 12px;
-            background: #f0f8ff;
-            border: 2px solid #0066cc;
-            border-radius: 8px;
-            color: #1a365d;
+            padding: 12px 16px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            color: var(--text-primary);
             font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
         }
 
         .bet-input input:focus {
             outline: none;
-            border-color: #00a8e6;
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
         }
 
         .bets-list {
-            max-height: 400px;
+            max-height: 480px;
             overflow-y: auto;
+        }
+
+        .bets-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .bets-list::-webkit-scrollbar-track {
+            background: var(--bg-color);
+            border-radius: 3px;
+        }
+
+        .bets-list::-webkit-scrollbar-thumb {
+            background: var(--text-light);
+            border-radius: 3px;
         }
 
         .bet-item {
@@ -314,10 +424,15 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px;
-            background: #f0f8ff;
-            border-radius: 8px;
+            background: var(--bg-color);
+            border-radius: var(--radius);
             margin-bottom: 12px;
-            border: 1px solid #0066cc;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .bet-item:hover {
+            box-shadow: var(--shadow);
         }
 
         .bet-info {
@@ -328,33 +443,34 @@
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 4px;
-            color: #1a365d;
+            color: var(--text-primary);
         }
 
         .bet-details {
             font-size: 12px;
-            color: #4a5568;
+            color: var(--text-secondary);
         }
 
         .bet-result {
             padding: 8px 16px;
-            border-radius: 8px;
-            font-weight: bold;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 13px;
         }
 
         .bet-pending {
-            background: rgba(251, 191, 36, 0.2);
-            color: #d97706;
+            background: rgba(251, 191, 36, 0.1);
+            color: #D97706;
         }
 
         .bet-won {
-            background: rgba(34, 197, 94, 0.2);
-            color: #16a34a;
+            background: rgba(34, 197, 94, 0.1);
+            color: #16A34A;
         }
 
         .bet-lost {
-            background: rgba(239, 68, 68, 0.2);
-            color: #dc2626;
+            background: rgba(239, 68, 68, 0.1);
+            color: #DC2626;
         }
 
         .hidden {
@@ -363,70 +479,166 @@
 
         .tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+            width: fit-content;
         }
 
         .tab {
-            padding: 10px 20px;
-            background: #f0f8ff;
-            border: 2px solid #0066cc;
-            border-radius: 8px;
-            color: #0066cc;
+            padding: 10px 24px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius);
+            color: var(--text-secondary);
             cursor: pointer;
             font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
         }
 
         .tab:hover {
-            background: #e8f4fc;
+            background: rgba(0,0,0,0.04);
+            color: var(--text-primary);
         }
 
         .tab.active {
-            background: linear-gradient(90deg, #0066cc, #00a8e6);
+            background: var(--primary-color);
             color: white;
+            box-shadow: 0 2px 8px rgba(66, 133, 244, 0.3);
         }
 
         .alert {
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border-radius: var(--radius);
             margin-bottom: 16px;
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .alert-success {
-            background: rgba(34, 197, 94, 0.1);
-            color: #16a34a;
-            border: 2px solid #16a34a;
+            background: rgba(34, 197, 94, 0.08);
+            color: #16A34A;
+            border: 1px solid rgba(34, 197, 94, 0.2);
         }
 
         .alert-error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #dc2626;
-            border: 2px solid #dc2626;
+            background: rgba(239, 68, 68, 0.08);
+            color: #DC2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .login-form {
             max-width: 400px;
             margin: 0 auto;
         }
+
+        .login-form .card {
+            padding: 32px;
+        }
+
+        .link-text {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .link-text:hover {
+            text-decoration: underline;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 24px;
+            color: var(--text-light);
+        }
+
+        .empty-state svg {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 16px;
+            }
+            
+            header {
+                flex-direction: column;
+                gap: 16px;
+                padding: 20px;
+            }
+            
+            .match-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .match-teams {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            
+            .match-score {
+                padding: 0 12px;
+            }
+            
+            .odds-grid {
+                gap: 6px;
+            }
+            
+            .odds-item, .odds-handicap {
+                padding: 10px 4px;
+            }
+            
+            .odds-value, .handicap-value {
+                font-size: 16px;
+            }
+            
+            .tabs {
+                width: 100%;
+            }
+            
+            .tab {
+                flex: 1;
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>⚽ 体育赛事投注系统</h1>
+            <h1><span class="logo-icon">61X</span>61X趣味积分竞猜</h1>
             <div class="user-info" id="userInfo">
-                <span class="points-badge" id="pointsBadge">积分: 0</span>
+                <span class="points-badge"><span class="points-icon">🏆</span>积分: <span id="pointsBadge">0</span></span>
                 <button class="btn btn-danger" onclick="logout()">退出登录</button>
             </div>
         </header>
 
         <div id="loginSection">
             <div class="card login-form">
-                <h2>用户登录</h2>
+                <h2>欢迎回来</h2>
                 <div class="form-group">
                     <label>用户名</label>
                     <input type="text" id="loginUsername" placeholder="请输入用户名">
@@ -436,15 +648,15 @@
                     <input type="password" id="loginPassword" placeholder="请输入密码">
                 </div>
                 <button class="btn btn-primary" style="width: 100%;" onclick="login()">登录</button>
-                <p style="text-align: center; margin-top: 16px; color: rgba(255,255,255,0.6);">
-                    还没有账号？<a href="#" onclick="showRegister()" style="color: #00d4ff;">立即注册</a>
+                <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">
+                    还没有账号？<a href="#" onclick="showRegister()" class="link-text">立即注册</a>
                 </p>
             </div>
         </div>
 
         <div id="registerSection" class="hidden">
             <div class="card login-form">
-                <h2>用户注册</h2>
+                <h2>创建账号</h2>
                 <div class="form-group">
                     <label>用户名</label>
                     <input type="text" id="registerUsername" placeholder="请输入用户名">
@@ -458,8 +670,8 @@
                     <input type="text" id="registerInviteCode" placeholder="请输入邀请码">
                 </div>
                 <button class="btn btn-primary" style="width: 100%;" onclick="register()">注册</button>
-                <p style="text-align: center; margin-top: 16px; color: rgba(255,255,255,0.6);">
-                    已有账号？<a href="#" onclick="showLogin()" style="color: #00d4ff;">立即登录</a>
+                <p style="text-align: center; margin-top: 16px; color: var(--text-secondary);">
+                    已有账号？<a href="#" onclick="showLogin()" class="link-text">立即登录</a>
                 </p>
             </div>
         </div>
@@ -472,8 +684,10 @@
 
             <div id="matchesTab">
                 <div id="matchesList" class="match-list">
-                    <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
-                        加载中...
+                    <div class="empty-state">
+                        <div style="font-size: 48px; margin-bottom: 16px;">⚽</div>
+                        <h3>加载中...</h3>
+                        <p>正在获取最新的比赛数据</p>
                     </div>
                 </div>
             </div>
@@ -482,8 +696,10 @@
                 <div class="card">
                     <h2>我的投注记录</h2>
                     <div id="betsList" class="bets-list">
-                        <div style="text-align: center; padding: 40px; color: rgba(255,255,255,0.5);">
-                            加载中...
+                        <div class="empty-state">
+                            <div style="font-size: 48px; margin-bottom: 16px;">📋</div>
+                            <h3>加载中...</h3>
+                            <p>正在获取您的投注记录</p>
                         </div>
                     </div>
                 </div>
