@@ -90,7 +90,7 @@ function settleBet(betType: string, betValue: string, score: string, handicapAtB
 			} else if (betValue === "away") {
 				if (result === 'lost') wonCount++;
 				else if (result === 'push') pushCount++;
-				else wonCount++;
+				else lostCount++;
 			}
 		}
 		
