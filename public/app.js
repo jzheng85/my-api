@@ -175,7 +175,7 @@ function renderMatches(matches) {
         if (!isEnded) {
             oddsSection = `
                 <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #00d4ff; margin-bottom: 8px;">胜平负 (1x2)</div>
+                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">胜平负 (1x2)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'win', ${match.winOdds})">
                             <div class="odds-label">主胜</div>
@@ -194,15 +194,17 @@ function renderMatches(matches) {
                 
                 ${match.handicap ? `
                 <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #7c3aed; margin-bottom: 8px;">让球 (AH) ${match.handicap}</div>
+                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">让球 (AH)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ah', 'home', ${match.handicapHomeOdds})">
-                            <div class="odds-label">主队让球赢</div>
+                            <div class="odds-label">主队</div>
                             <div class="odds-value">${match.handicapHomeOdds}</div>
                         </div>
-                        <div style="visibility: hidden;"></div>
+                        <div class="odds-handicap">
+                            <div class="handicap-value">${match.handicap}</div>
+                        </div>
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ah', 'away', ${match.handicapAwayOdds})">
-                            <div class="odds-label">客队让球赢</div>
+                            <div class="odds-label">客队</div>
                             <div class="odds-value">${match.handicapAwayOdds}</div>
                         </div>
                     </div>
@@ -211,13 +213,15 @@ function renderMatches(matches) {
                 
                 ${match.totalGoals ? `
                 <div style="margin-bottom: 15px;">
-                    <div style="font-size: 12px; color: #f59e0b; margin-bottom: 8px;">大小球 (OU) ${match.totalGoals}</div>
+                    <div style="font-size: 12px; color: #0066cc; margin-bottom: 8px; font-weight: bold;">大小球 (OU)</div>
                     <div class="odds-grid">
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'over', ${match.overOdds})">
                             <div class="odds-label">大球</div>
                             <div class="odds-value">${match.overOdds}</div>
                         </div>
-                        <div style="visibility: hidden;"></div>
+                        <div class="odds-handicap">
+                            <div class="handicap-value">${match.totalGoals}</div>
+                        </div>
                         <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'under', ${match.underOdds})">
                             <div class="odds-label">小球</div>
                             <div class="odds-value">${match.underOdds}</div>
