@@ -127,6 +127,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | createdAt | TEXT | 创建时间 |
 | d_st2 | TEXT | 比赛状态标识（wait=未开始，ok=已开场） |
 | d_st_ing | TEXT | 比赛进行中标识（0=未进行，1=进行中） |
+| match_time | TEXT | 比赛时间/开球时间 |
 | match_status | TEXT | 状态（pending/live/ended） |
 
 ## API 接口
@@ -187,6 +188,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `migrations/002_add_settlement_fields.sql` | 给 bets 表添加 payout、settled_at、match_result 字段 |
 | `migrations/003_add_bet_handicap_fields.sql` | 给 bets 表添加 handicap_at_bet、total_goals_at_bet 字段 |
 | `migrations/004_add_match_status_fields.sql` | 给 matches 表添加 d_st2、d_st_ing 字段 |
+| `migrations/005_add_match_time.sql` | 给 matches 表添加 match_time 字段 |
 
 ### 执行迁移命令
 
@@ -196,10 +198,12 @@ npx wrangler d1 execute my-db --file migrations/001_initial.sql
 npx wrangler d1 execute my-db --file migrations/002_add_settlement_fields.sql
 npx wrangler d1 execute my-db --file migrations/003_add_bet_handicap_fields.sql
 npx wrangler d1 execute my-db --file migrations/004_add_match_status_fields.sql
+npx wrangler d1 execute my-db --file migrations/005_add_match_time.sql
 
 # 远程数据库
 npx wrangler d1 execute my-db --remote --file migrations/001_initial.sql
 npx wrangler d1 execute my-db --remote --file migrations/002_add_settlement_fields.sql
 npx wrangler d1 execute my-db --remote --file migrations/003_add_bet_handicap_fields.sql
 npx wrangler d1 execute my-db --remote --file migrations/004_add_match_status_fields.sql
+npx wrangler d1 execute my-db --remote --file migrations/005_add_match_time.sql
 ```

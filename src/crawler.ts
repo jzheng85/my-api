@@ -17,6 +17,7 @@ export interface MatchData {
 	underOdds: string;
 	dSt2: string;
 	dStIng: string;
+	matchTime: string;
 }
 
 async function executeWithRetry<T>(fn: () => Promise<T>, maxRetries: number = 3, delayMs: number = 1000): Promise<T> {
@@ -132,6 +133,7 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 								let totalGoals = '';
 								let overOdds = '';
 								let underOdds = '';
+								let matchTime = '';
 								
 								lis.forEach((li) => {
 									const text = li.textContent?.trim() || '';
@@ -139,6 +141,10 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 									
 									if (className.includes('c0match')) {
 										league = text;
+									}
+									
+									if (className.includes('c0time')) {
+										matchTime = text;
 									}
 									
 									if (className.includes('c0home')) {
@@ -218,6 +224,7 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 										underOdds,
 										dSt2,
 										dStIng,
+										matchTime,
 									});
 								}
 							});
@@ -261,8 +268,8 @@ export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Pro
 		const matchStatus = determineMatchStatus(match.dSt2, match.dStIng);
 		
 		await db.prepare(
-			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, totalGoals, overOdds, underOdds, d_st2, d_st_ing, match_status, createdAt)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, totalGoals, overOdds, underOdds, d_st2, d_st_ing, match_time, match_status, createdAt)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		).bind(
 			match.id,
 			match.league,
@@ -280,6 +287,7 @@ export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Pro
 			match.underOdds,
 			match.dSt2,
 			match.dStIng,
+			match.matchTime,
 			matchStatus,
 			now
 		).run();
