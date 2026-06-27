@@ -232,16 +232,16 @@ function renderMatches(matches) {
                 <div class="odds-section">
                     <div class="odds-title">大小球 (OU)</div>
                     <div class="odds-grid">
-                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'over', ${match.overOdds})">
-                            <div class="odds-label">大球</div>
-                            <div class="odds-value">${match.overOdds}</div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'under', ${match.underOdds})">
+                            <div class="odds-label">小球</div>
+                            <div class="odds-value">${match.underOdds}</div>
                         </div>
                         <div class="odds-handicap">
                             <div class="handicap-value">${match.totalGoals}</div>
                         </div>
-                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'under', ${match.underOdds})">
-                            <div class="odds-label">小球</div>
-                            <div class="odds-value">${match.underOdds}</div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'over', ${match.overOdds})">
+                            <div class="odds-label">大球</div>
+                            <div class="odds-value">${match.overOdds}</div>
                         </div>
                     </div>
                 </div>
