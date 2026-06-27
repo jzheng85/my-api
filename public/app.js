@@ -132,14 +132,19 @@ function switchTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.getElementById('matchesTab').classList.add('hidden');
     document.getElementById('betsTab').classList.add('hidden');
+    document.getElementById('transactionsTab').classList.add('hidden');
 
     if (tab === 'matches') {
         document.querySelectorAll('.tab')[0].classList.add('active');
         document.getElementById('matchesTab').classList.remove('hidden');
-    } else {
+    } else if (tab === 'bets') {
         document.querySelectorAll('.tab')[1].classList.add('active');
         document.getElementById('betsTab').classList.remove('hidden');
         loadBets();
+    } else if (tab === 'transactions') {
+        document.querySelectorAll('.tab')[2].classList.add('active');
+        document.getElementById('transactionsTab').classList.remove('hidden');
+        loadTransactions();
     }
 }
 
@@ -391,7 +396,7 @@ function renderBets(bets) {
         
         let pointsText = '';
         if (bet.status === 'pending') {
-            const expectedPayout = Math.floor(parseFloat(bet.points) * (parseFloat(bet.odds_at_bet) + 1));
+            const expectedPayout = Math.round(parseFloat(bet.points) * (parseFloat(bet.odds_at_bet) + 1));
             pointsText = `预计赢 ${expectedPayout} 积分`;
         } else if (bet.status === 'won') {
             pointsText = `赢 ${bet.payout} 积分`;
@@ -464,6 +469,115 @@ async function updateUserInfo() {
         }
     } catch (error) {
         console.error('更新用户信息失败', error);
+    }
+}
+
+async function loadTransactions() {
+    try {
+        const response = await apiRequest('/api/user/transactions');
+        if (response.ok) {
+            const transactions = await response.json();
+            renderTransactions(transactions);
+        } else {
+            showAlert('加载积分明细失败', 'error');
+        }
+    } catch (error) {
+        showAlert('加载积分明细失败', 'error');
+    }
+}
+
+function renderTransactions(transactions) {
+    const container = document.getElementById('transactionsList');
+    
+    if (transactions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
+                <h3>暂无积分明细</h3>
+                <p>您还没有任何积分变动记录</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = transactions.map(tx => {
+        const typeText = getTransactionTypeText(tx.type);
+        const amountClass = tx.amount > 0 ? 'tx-credit' : 'tx-debit';
+        const amountText = tx.amount > 0 ? `+${tx.amount}` : `${tx.amount}`;
+        
+        const date = new Date(tx.created_at);
+        const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+        return `
+            <div class="bet-item">
+                <div class="bet-info">
+                    <div class="bet-match">${typeText}</div>
+                    <div class="bet-details">
+                        ${tx.description || '-'}
+                    </div>
+                    <div class="bet-details" style="margin-top: 4px;">
+                        ${dateStr} | 余额: ${tx.balance_after}
+                    </div>
+                </div>
+                <div class="bet-result ${amountClass}" style="font-size: 16px;">${amountText}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTransactionTypeText(type) {
+    const map = {
+        'register': '注册赠送',
+        'bet': '投注扣款',
+        'settle_win': '结算赢',
+        'settle_lose': '结算输',
+        'recharge': '充值'
+    };
+    return map[type] || type;
+}
+
+function showRechargeModal() {
+    document.getElementById('rechargeModal').classList.remove('hidden');
+}
+
+function closeRechargeModal() {
+    document.getElementById('rechargeModal').classList.add('hidden');
+    document.getElementById('rechargeAmount').value = '';
+    document.getElementById('rechargeSecret').value = '';
+}
+
+async function recharge() {
+    const amount = parseInt(document.getElementById('rechargeAmount').value);
+    const secret = document.getElementById('rechargeSecret').value;
+
+    if (!amount || amount <= 0) {
+        showAlert('请输入有效的充值金额', 'error');
+        return;
+    }
+
+    if (!secret) {
+        showAlert('请输入充值密钥', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/user/recharge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, amount, secret })
+        });
+
+        if (response.ok) {
+            showAlert('充值成功！', 'success');
+            closeRechargeModal();
+            updateUserInfo();
+            loadTransactions();
+        } else {
+            const error = await response.json();
+            showAlert(error.error, 'error');
+        }
+    } catch (error) {
+        showAlert('充值失败', 'error');
     }
 }
 

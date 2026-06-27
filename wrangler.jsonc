@@ -47,7 +47,8 @@
 	 * https://developers.cloudflare.com/workers/configuration/secrets/
 	 */
 	"vars": {
-		"JWT_SECRET": "your-secret-key-change-in-production"
+		"JWT_SECRET": "your-secret-key-change-in-production",
+		"RECHARGE_SECRET": "your-recharge-secret-change-in-production"
 	},
 	/**
 	 * Static Assets

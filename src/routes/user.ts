@@ -20,7 +20,13 @@ async function hashPassword(password: string, salt: Uint8Array): Promise<string>
 
 function generateSalt(): Uint8Array {
 	const salt = new Uint8Array(16);
-	crypto.getRandomValues(salt);
+	if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+		crypto.getRandomValues(salt);
+	} else {
+		for (let i = 0; i < 16; i++) {
+			salt[i] = Math.floor(Math.random() * 256);
+		}
+	}
 	return salt;
 }
 
@@ -70,8 +76,16 @@ POST("/api/register", async (request, env) => {
 			.bind(username, fullHash, 1000)
 			.run();
 		
+		const userId = (result as any).meta.last_row_id;
+		
+		await env.DB.prepare(
+			"INSERT INTO point_transactions (user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)"
+		)
+			.bind(userId, 'register', 1000, 1000, '注册赠送')
+			.run();
+		
 		return Response.json({ 
-			id: (result as any).lastInsertRowid, 
+			id: userId, 
 			username, 
 			points: 1000 
 		}, { status: 201 });
@@ -139,3 +153,65 @@ GET("/api/user/points", withAuth(async (request, env, ctx, user) => {
 		return Response.json({ error: "查询积分失败" }, { status: 500 });
 	}
 }));
+
+GET("/api/user/transactions", withAuth(async (request, env, ctx, user) => {
+	try {
+		const transactions = await env.DB.prepare(
+			"SELECT * FROM point_transactions WHERE user_id = ? ORDER BY created_at DESC"
+		)
+			.bind(user.id)
+			.all();
+		
+		return Response.json(transactions.results || []);
+	} catch (error) {
+		console.error("查询积分明细失败:", error);
+		return Response.json({ error: "查询积分明细失败" }, { status: 500 });
+	}
+}));
+
+POST("/api/user/recharge", async (request, env) => {
+	try {
+		const { userId, amount, secret } = await request.json();
+		
+		if (!userId || !amount || !secret) {
+			return Response.json({ error: "参数不完整" }, { status: 400 });
+		}
+		
+		if (secret !== env.RECHARGE_SECRET) {
+			return Response.json({ error: "无效的密钥" }, { status: 401 });
+		}
+		
+		if (amount <= 0) {
+			return Response.json({ error: "充值积分必须大于0" }, { status: 400 });
+		}
+		
+		const user = await env.DB.prepare("SELECT id, points FROM users WHERE id = ?")
+			.bind(userId)
+			.first();
+		
+		if (!user) {
+			return Response.json({ error: "用户不存在" }, { status: 404 });
+		}
+		
+		const newBalance = (user.points as number) + amount;
+		
+		const batch = await env.DB.batch([
+			env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+				.bind(amount, userId),
+			env.DB.prepare(
+				"INSERT INTO point_transactions (user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)"
+			)
+				.bind(userId, 'recharge', amount, newBalance, '充值')
+		]);
+		
+		return Response.json({ 
+			userId,
+			amount,
+			balanceAfter: newBalance,
+			transactionId: (batch[1] as any).lastInsertRowid
+		}, { status: 201 });
+	} catch (error) {
+		console.error("充值失败:", error);
+		return Response.json({ error: "充值失败" }, { status: 500 });
+	}
+});

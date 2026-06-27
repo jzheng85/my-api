@@ -7,5 +7,6 @@ export default defineWorkersConfig({
 				wrangler: { configPath: "./wrangler.jsonc" },
 			},
 		},
+		maxWorkers: 1,
 	},
 });

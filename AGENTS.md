@@ -137,6 +137,19 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | match_time | TEXT | 比赛时间/开球时间 |
 | match_status | TEXT | 状态（pending/live/ended） |
 
+### point_transactions表（积分流水表）
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| id | INTEGER | - | 主键，自增 |
+| user_id | INTEGER | - | 用户ID（外键） |
+| type | TEXT | - | 流水类型（register/bet/settle_win/settle_lose/recharge） |
+| amount | INTEGER | - | 变动积分（正数为增加，负数为减少） |
+| balance_after | INTEGER | - | 变动后的余额 |
+| reference_id | INTEGER | null | 关联ID（如bet.id） |
+| description | TEXT | - | 描述信息 |
+| created_at | TEXT | CURRENT_TIMESTAMP | 创建时间 |
+
 ## API 接口
 
 > **认证说明**：除 `/api/register` 和 `/api/login` 外，所有接口需要在请求头中携带 `Authorization: Bearer <token>`
@@ -148,6 +161,8 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `/api/register` | POST | 用户注册 | 否 |
 | `/api/login` | POST | 用户登录（返回JWT Token） | 否 |
 | `/api/user/points` | GET | 查询当前用户积分 | 是 |
+| `/api/user/transactions` | GET | 查询积分明细 | 是 |
+| `/api/user/recharge` | POST | 积分充值（需要密钥） | 否 |
 
 ### 投注接口
 

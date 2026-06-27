@@ -146,13 +146,19 @@ POST("/api/bets", withAuth(async (request, env, ctx, user) => {
 			return Response.json({ error: "无效的赔率" }, { status: 400 });
 		}
 		
+		const newBalance = (dbUser.points as number) - points;
+		
 		const batch = await env.DB.batch([
 			env.DB.prepare("UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 				.bind(points, user.id),
 			env.DB.prepare(
 				"INSERT INTO bets (user_id, match_id, bet_type, bet_value, points, odds_at_bet, handicap_at_bet, total_goals_at_bet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)
-				.bind(user.id, matchId, betType, betValue, points, oddsAtBet, handicapAtBet, totalGoalsAtBet)
+				.bind(user.id, matchId, betType, betValue, points, oddsAtBet, handicapAtBet, totalGoalsAtBet),
+			env.DB.prepare(
+				"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+			)
+				.bind(user.id, 'bet', -points, newBalance, null, `投注 ${match.homeTeam} vs ${match.awayTeam}`)
 		]);
 		
 		const betResult = batch[1] as any;
@@ -208,6 +214,16 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 		const matchResult = determineMatchResult(match.score as string);
 		const now = new Date().toISOString();
 		
+		const userPointsMap = new Map<number, number>();
+		for (const bet of bets) {
+			if (!userPointsMap.has(bet.user_id)) {
+				const user = await env.DB.prepare("SELECT points FROM users WHERE id = ?")
+					.bind(bet.user_id)
+					.first();
+				userPointsMap.set(bet.user_id, (user?.points as number) || 0);
+			}
+		}
+		
 		const batchOperations: any[] = [];
 		
 		for (const bet of bets) {
@@ -220,7 +236,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 			);
 			
 			const status = won ? "won" : "lost";
-			const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
+			const payout = won ? Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 			
 			batchOperations.push(
 				env.DB.prepare(
@@ -230,9 +246,27 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 			);
 			
 			if (won) {
+				const currentBalance = userPointsMap.get(bet.user_id) || 0;
+				const newBalance = currentBalance + payout;
+				userPointsMap.set(bet.user_id, newBalance);
+				
 				batchOperations.push(
 					env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 						.bind(payout, bet.user_id)
+				);
+				
+				batchOperations.push(
+					env.DB.prepare(
+						"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+					)
+						.bind(bet.user_id, 'settle_win', payout, newBalance, bet.id, `结算赢 ${match.homeTeam} vs ${match.awayTeam}`)
+				);
+			} else {
+				batchOperations.push(
+					env.DB.prepare(
+						"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+					)
+						.bind(bet.user_id, 'settle_lose', 0, userPointsMap.get(bet.user_id) || 0, bet.id, `结算输 ${match.homeTeam} vs ${match.awayTeam}`)
 				);
 			}
 		}
@@ -268,6 +302,10 @@ POST("/api/bets/settle-all", async (request, env) => {
 		let totalSettled = 0;
 		
 		for (const match of matches) {
+			const matchDetail = await env.DB.prepare("SELECT homeTeam, awayTeam FROM matches WHERE id = ?")
+				.bind(match.id)
+				.first();
+			
 			const pendingBets = await env.DB.prepare(
 				"SELECT * FROM bets WHERE match_id = ? AND status = 'pending'"
 			)
@@ -281,6 +319,16 @@ POST("/api/bets/settle-all", async (request, env) => {
 			const matchResult = determineMatchResult(match.score);
 			const now = new Date().toISOString();
 			
+			const userPointsMap = new Map<number, number>();
+			for (const bet of bets) {
+				if (!userPointsMap.has(bet.user_id)) {
+					const user = await env.DB.prepare("SELECT points FROM users WHERE id = ?")
+						.bind(bet.user_id)
+						.first();
+					userPointsMap.set(bet.user_id, (user?.points as number) || 0);
+				}
+			}
+			
 			const batchOperations: any[] = [];
 			
 			for (const bet of bets) {
@@ -293,7 +341,7 @@ POST("/api/bets/settle-all", async (request, env) => {
 				);
 				
 				const status = won ? "won" : "lost";
-				const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
+				const payout = won ? Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 				
 				batchOperations.push(
 					env.DB.prepare(
@@ -303,9 +351,27 @@ POST("/api/bets/settle-all", async (request, env) => {
 				);
 				
 				if (won) {
+					const currentBalance = userPointsMap.get(bet.user_id) || 0;
+					const newBalance = currentBalance + payout;
+					userPointsMap.set(bet.user_id, newBalance);
+					
 					batchOperations.push(
 						env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 							.bind(payout, bet.user_id)
+					);
+					
+					batchOperations.push(
+						env.DB.prepare(
+							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+						)
+							.bind(bet.user_id, 'settle_win', payout, newBalance, bet.id, `结算赢 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
+					);
+				} else {
+					batchOperations.push(
+						env.DB.prepare(
+							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+						)
+							.bind(bet.user_id, 'settle_lose', 0, userPointsMap.get(bet.user_id) || 0, bet.id, `结算输 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
 					);
 				}
 			}

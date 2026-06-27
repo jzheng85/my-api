@@ -83,6 +83,10 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 		const matches = endedMatches.results || [];
 		
 		for (const match of matches) {
+			const matchDetail = await db.prepare("SELECT homeTeam, awayTeam FROM matches WHERE id = ?")
+				.bind(match.id)
+				.first();
+			
 			const pendingBets = await db.prepare(
 				"SELECT * FROM bets WHERE match_id = ? AND status = 'pending'"
 			).bind(match.id).all();
@@ -93,6 +97,16 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 			
 			const matchResult = determineMatchResult(match.score);
 			const now = new Date().toISOString();
+			
+			const userPointsMap = new Map<number, number>();
+			for (const bet of bets) {
+				if (!userPointsMap.has(bet.user_id)) {
+					const user = await db.prepare("SELECT points FROM users WHERE id = ?")
+						.bind(bet.user_id)
+						.first();
+					userPointsMap.set(bet.user_id, (user?.points as number) || 0);
+				}
+			}
 			
 			const batchOperations: any[] = [];
 			
@@ -106,7 +120,7 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 				);
 				
 				const status = won ? "won" : "lost";
-				const payout = won ? Math.floor((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
+				const payout = won ? Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
 				
 				batchOperations.push(
 					db.prepare(
@@ -115,9 +129,27 @@ async function settleCompletedMatches(db: D1Database): Promise<void> {
 				);
 				
 				if (won) {
+					const currentBalance = userPointsMap.get(bet.user_id) || 0;
+					const newBalance = currentBalance + payout;
+					userPointsMap.set(bet.user_id, newBalance);
+					
 					batchOperations.push(
 						db.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 							.bind(payout, bet.user_id)
+					);
+					
+					batchOperations.push(
+						db.prepare(
+							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+						)
+							.bind(bet.user_id, 'settle_win', payout, newBalance, bet.id, `结算赢 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
+					);
+				} else {
+					batchOperations.push(
+						db.prepare(
+							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+						)
+							.bind(bet.user_id, 'settle_lose', 0, userPointsMap.get(bet.user_id) || 0, bet.id, `结算输 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
 					);
 				}
 			}
