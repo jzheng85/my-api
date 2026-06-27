@@ -37,12 +37,18 @@ function stringToSalt(str: string): Uint8Array {
 	return salt;
 }
 
+const INVITE_CODES = ['INVITE2026', 'VIP2026', 'TEST2026'];
+
 POST("/api/register", async (request, env) => {
 	try {
-		const { username, password } = await request.json();
+		const { username, password, inviteCode } = await request.json();
 		
-		if (!username || !password) {
-			return Response.json({ error: "用户名和密码不能为空" }, { status: 400 });
+		if (!username || !password || !inviteCode) {
+			return Response.json({ error: "用户名、密码和邀请码不能为空" }, { status: 400 });
+		}
+		
+		if (!INVITE_CODES.includes(inviteCode.toUpperCase())) {
+			return Response.json({ error: "无效的邀请码" }, { status: 400 });
 		}
 		
 		const existingUser = await env.DB.prepare("SELECT id FROM users WHERE username = ?")

@@ -57,9 +57,10 @@ async function login() {
 async function register() {
     const username = document.getElementById('registerUsername').value;
     const password = document.getElementById('registerPassword').value;
+    const inviteCode = document.getElementById('registerInviteCode').value;
 
-    if (!username || !password) {
-        showAlert('请输入用户名和密码', 'error');
+    if (!username || !password || !inviteCode) {
+        showAlert('请输入用户名、密码和邀请码', 'error');
         return;
     }
 
@@ -71,7 +72,7 @@ async function register() {
     try {
         const response = await apiRequest('/api/register', {
             method: 'POST',
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ username, password, inviteCode })
         });
 
         if (response.ok) {
