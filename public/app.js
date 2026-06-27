@@ -382,13 +382,32 @@ function renderBets(bets) {
             resultClass = 'bet-lost';
         }
 
+        const homeTeam = bet.homeTeam || '未知主队';
+        const awayTeam = bet.awayTeam || '未知客队';
+        const betTypeText = getBetTypeText(bet.bet_type);
+        const betValueText = getBetValueText(bet.bet_value);
+        const handicapText = getHandicapText(bet.bet_type, bet.bet_value, bet.handicap_at_bet, bet.total_goals_at_bet);
+        const oddsWithPrincipal = (parseFloat(bet.odds_at_bet) + 1).toFixed(2);
+        
+        let pointsText = '';
+        if (bet.status === 'pending') {
+            const expectedPayout = Math.floor(parseFloat(bet.points) * (parseFloat(bet.odds_at_bet) + 1));
+            pointsText = `预计赢 ${expectedPayout} 积分`;
+        } else if (bet.status === 'won') {
+            pointsText = `赢 ${bet.payout} 积分`;
+        } else {
+            pointsText = `输 ${bet.points} 积分`;
+        }
+
         return `
             <div class="bet-item">
                 <div class="bet-info">
-                    <div class="bet-match">${bet.match_id}</div>
+                    <div class="bet-match">${homeTeam} vs ${awayTeam}</div>
                     <div class="bet-details">
-                        ${bet.bet_type.toUpperCase()} - ${getBetValueText(bet.bet_value)} | ${bet.points}积分 @ ${bet.odds_at_bet}
-                        ${payoutText ? ` | ${payoutText}` : ''}
+                        ${betTypeText} - ${betValueText}${handicapText ? ` ${handicapText}` : ''}
+                    </div>
+                    <div class="bet-details" style="margin-top: 4px;">
+                        ${bet.points}积分 @ ${oddsWithPrincipal}赔率 | ${pointsText}
                     </div>
                 </div>
                 <div class="bet-result ${resultClass}">${resultText}</div>
@@ -397,17 +416,41 @@ function renderBets(bets) {
     }).join('');
 }
 
+function getBetTypeText(type) {
+    const map = {
+        '1x2': '胜平负',
+        'ah': '让球',
+        'ou': '大小球'
+    };
+    return map[type] || type;
+}
+
 function getBetValueText(value) {
     const map = {
         'win': '主胜',
         'draw': '平局',
         'lose': '客胜',
-        'home': '主队让球赢',
-        'away': '客队让球赢',
+        'home': '主队',
+        'away': '客队',
         'over': '大球',
         'under': '小球'
     };
     return map[value] || value;
+}
+
+function getHandicapText(betType, betValue, handicap, totalGoals) {
+    if (betType === 'ah' && handicap) {
+        if (betValue === 'away') {
+            const sign = handicap.startsWith('-') ? '+' : '-';
+            const num = handicap.replace(/[+-]/g, '');
+            return `(${sign}${num})`;
+        }
+        return `(${handicap})`;
+    }
+    if (betType === 'ou' && totalGoals) {
+        return `(${totalGoals})`;
+    }
+    return '';
 }
 
 async function updateUserInfo() {
