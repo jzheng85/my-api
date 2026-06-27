@@ -1,4 +1,5 @@
 import { GET, POST } from "../router";
+import { signToken, withAuth } from "../auth";
 
 async function hashPassword(password: string, salt: Uint8Array): Promise<string> {
 	const encoder = new TextEncoder();
@@ -100,10 +101,13 @@ POST("/api/login", async (request, env) => {
 			return Response.json({ error: "用户名或密码错误" }, { status: 401 });
 		}
 		
+		const token = await signToken({ id: user.id, username: user.username }, env.JWT_SECRET);
+		
 		return Response.json({ 
 			id: user.id, 
 			username: user.username, 
-			points: user.points 
+			points: user.points,
+			token 
 		});
 	} catch (error) {
 		console.error("登录失败:", error);
@@ -111,23 +115,21 @@ POST("/api/login", async (request, env) => {
 	}
 });
 
-GET("/api/user/:id/points", async (request, env) => {
+GET("/api/user/points", withAuth(async (request, env, ctx, user) => {
 	try {
-		const userId = (request as any).params.id;
-		
-		const user = await env.DB.prepare(
+		const dbUser = await env.DB.prepare(
 			"SELECT id, username, points FROM users WHERE id = ?"
 		)
-			.bind(userId)
+			.bind(user.id)
 			.first();
 		
-		if (!user) {
+		if (!dbUser) {
 			return Response.json({ error: "用户不存在" }, { status: 404 });
 		}
 		
-		return Response.json({ id: user.id, username: user.username, points: user.points });
+		return Response.json({ id: dbUser.id, username: dbUser.username, points: dbUser.points });
 	} catch (error) {
 		console.error("查询积分失败:", error);
 		return Response.json({ error: "查询积分失败" }, { status: 500 });
 	}
-});
+}));

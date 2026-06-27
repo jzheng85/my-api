@@ -74,6 +74,13 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 - **赔率计算**：网站显示的赔率为净赔率（不含本金），结算时返还 = 投注积分 × (赔率 + 1)（含本金）
 - **比赛结束判定**：依赖 match_status 字段，不依赖比分（允许0:0终场）
 
+### 5. JWT 认证
+- 用户登录时生成 JWT Token，有效期24小时
+- Token 包含用户ID和用户名信息
+- 所有受保护接口需要在请求头中携带 `Authorization: Bearer <token>`
+- 公开接口：`/api/register`、`/api/login`
+- 受保护接口：所有其他API接口
+
 ## D1 数据库表结构
 
 ### users表（用户表）
@@ -132,37 +139,38 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 
 ## API 接口
 
+> **认证说明**：除 `/api/register` 和 `/api/login` 外，所有接口需要在请求头中携带 `Authorization: Bearer <token>`
+
 ### 用户接口
 
-| 接口 | 方法 | 功能 |
-|------|------|------|
-| `/api/register` | POST | 用户注册 |
-| `/api/login` | POST | 用户登录 |
-| `/api/user/:id/points` | GET | 查询用户积分 |
+| 接口 | 方法 | 功能 | 认证 |
+|------|------|------|------|
+| `/api/register` | POST | 用户注册 | 否 |
+| `/api/login` | POST | 用户登录（返回JWT Token） | 否 |
+| `/api/user/points` | GET | 查询当前用户积分 | 是 |
 
 ### 投注接口
 
-| 接口 | 方法 | 功能 |
-|------|------|------|
-| `/api/bets` | POST | 发起投注 |
-| `/api/bets/:userId` | GET | 查询用户投注记录 |
-| `/api/bets?matchId=xxx` | GET | 查询比赛投注记录 |
-| `/api/bets/settle/:matchId` | POST | 手动结算指定比赛 |
-| `/api/bets/settle-all` | POST | 批量结算所有已结束比赛 |
+| 接口 | 方法 | 功能 | 认证 |
+|------|------|------|------|
+| `/api/bets` | POST | 发起投注 | 是 |
+| `/api/bets` | GET | 查询当前用户投注记录（支持 `?matchId=xxx` 过滤） | 是 |
+| `/api/bets/settle/:matchId` | POST | 手动结算指定比赛 | 是 |
+| `/api/bets/settle-all` | POST | 批量结算所有已结束比赛 | 是 |
 
 ### 赛事接口
 
-| 接口 | 方法 | 功能 |
-|------|------|------|
-| `/api/matches` | GET | 获取所有比赛列表 |
-| `/api/matches/:id` | GET | 获取单场比赛详情 |
+| 接口 | 方法 | 功能 | 认证 |
+|------|------|------|------|
+| `/api/matches` | GET | 获取所有比赛列表 | 是 |
+| `/api/matches/:id` | GET | 获取单场比赛详情 | 是 |
 
 ### 爬虫接口
 
-| 接口 | 方法 | 功能 |
-|------|------|------|
-| `/api/crawl` | GET | 手动触发爬虫 |
-| `/api/browser` | GET | 获取浏览器截图 |
+| 接口 | 方法 | 功能 | 认证 |
+|------|------|------|------|
+| `/api/crawl` | GET | 手动触发爬虫 | 是 |
+| `/api/browser` | GET | 获取浏览器截图 | 是 |
 
 ## 数据解析规则
 

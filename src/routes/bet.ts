@@ -1,4 +1,5 @@
 import { GET, POST } from "../router";
+import { withAuth } from "../auth";
 
 function parseScore(score: string): { home: number; away: number } {
 	const parts = score.split(":");
@@ -73,11 +74,11 @@ function isBetWon(betType: string, betValue: string, score: string, handicapAtBe
 	return false;
 }
 
-POST("/api/bets", async (request, env) => {
+POST("/api/bets", withAuth(async (request, env, ctx, user) => {
 	try {
-		const { userId, matchId, betType, betValue, points } = await request.json();
+		const { matchId, betType, betValue, points } = await request.json();
 		
-		if (!userId || !matchId || !betType || !betValue || !points) {
+		if (!matchId || !betType || !betValue || !points) {
 			return Response.json({ error: "参数不完整" }, { status: 400 });
 		}
 		
@@ -85,17 +86,17 @@ POST("/api/bets", async (request, env) => {
 			return Response.json({ error: "投注积分必须大于0" }, { status: 400 });
 		}
 		
-		const user = await env.DB.prepare(
+		const dbUser = await env.DB.prepare(
 			"SELECT id, points FROM users WHERE id = ?"
 		)
-			.bind(userId)
+			.bind(user.id)
 			.first();
 		
-		if (!user) {
+		if (!dbUser) {
 			return Response.json({ error: "用户不存在" }, { status: 404 });
 		}
 		
-		if ((user.points as number) < points) {
+		if ((dbUser.points as number) < points) {
 			return Response.json({ error: "积分不足" }, { status: 400 });
 		}
 		
@@ -147,18 +148,18 @@ POST("/api/bets", async (request, env) => {
 		
 		const batch = await env.DB.batch([
 			env.DB.prepare("UPDATE users SET points = points - ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
-				.bind(points, userId),
+				.bind(points, user.id),
 			env.DB.prepare(
 				"INSERT INTO bets (user_id, match_id, bet_type, bet_value, points, odds_at_bet, handicap_at_bet, total_goals_at_bet) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 			)
-				.bind(userId, matchId, betType, betValue, points, oddsAtBet, handicapAtBet, totalGoalsAtBet)
+				.bind(user.id, matchId, betType, betValue, points, oddsAtBet, handicapAtBet, totalGoalsAtBet)
 		]);
 		
 		const betResult = batch[1] as any;
 		
 		return Response.json({ 
 			id: betResult.lastInsertRowid,
-			userId,
+			userId: user.id,
 			matchId,
 			betType,
 			betValue,
@@ -172,7 +173,7 @@ POST("/api/bets", async (request, env) => {
 		console.error("投注失败:", error);
 		return Response.json({ error: "投注失败" }, { status: 500 });
 	}
-});
+}));
 
 POST("/api/bets/settle/:matchId", async (request, env) => {
 	try {
@@ -323,33 +324,16 @@ POST("/api/bets/settle-all", async (request, env) => {
 	}
 });
 
-GET("/api/bets/:userId", async (request, env) => {
-	try {
-		const userId = (request as any).params.userId;
-		
-		const bets = await env.DB.prepare(
-			"SELECT b.*, m.homeTeam, m.awayTeam, m.league, m.score FROM bets b LEFT JOIN matches m ON b.match_id = m.id WHERE b.user_id = ? ORDER BY b.created_at DESC"
-		)
-			.bind(userId)
-			.all();
-		
-		return Response.json(bets.results || []);
-	} catch (error) {
-		console.error("查询投注记录失败:", error);
-		return Response.json({ error: "查询投注记录失败" }, { status: 500 });
-	}
-});
-
-GET("/api/bets", async (request, env) => {
+GET("/api/bets", withAuth(async (request, env, ctx, user) => {
 	try {
 		const url = new URL(request.url);
 		const matchId = url.searchParams.get('matchId');
 		
-		let query = "SELECT b.*, m.homeTeam, m.awayTeam, m.league, m.score, m.match_status FROM bets b LEFT JOIN matches m ON b.match_id = m.id ORDER BY b.created_at DESC";
-		const params: any[] = [];
+		let query = "SELECT b.*, m.homeTeam, m.awayTeam, m.league, m.score, m.match_status FROM bets b LEFT JOIN matches m ON b.match_id = m.id WHERE b.user_id = ? ORDER BY b.created_at DESC";
+		const params: any[] = [user.id];
 		
 		if (matchId) {
-			query = "SELECT b.*, m.homeTeam, m.awayTeam, m.league, m.score, m.match_status FROM bets b LEFT JOIN matches m ON b.match_id = m.id WHERE b.match_id = ? ORDER BY b.created_at DESC";
+			query = "SELECT b.*, m.homeTeam, m.awayTeam, m.league, m.score, m.match_status FROM bets b LEFT JOIN matches m ON b.match_id = m.id WHERE b.user_id = ? AND b.match_id = ? ORDER BY b.created_at DESC";
 			params.push(matchId);
 		}
 		
@@ -362,4 +346,4 @@ GET("/api/bets", async (request, env) => {
 		console.error("查询投注记录失败:", error);
 		return Response.json({ error: "查询投注记录失败" }, { status: 500 });
 	}
-});
+}));
