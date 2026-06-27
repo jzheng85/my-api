@@ -24,7 +24,9 @@ export function DELETE(path: string, handler: RouteHandler) {
 	routes.push({ method: "DELETE", path, handler });
 }
 
-export function handleRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> | Response {
+export const NOT_FOUND = Symbol('NOT_FOUND');
+
+export function handleRequest(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> | Response | symbol {
 	const url = new URL(request.url);
 
 	for (const route of routes) {
@@ -55,5 +57,5 @@ export function handleRequest(request: Request, env: Env, ctx: ExecutionContext)
 		}
 	}
 
-	return new Response("Not Found", { status: 404 });
+	return NOT_FOUND;
 }

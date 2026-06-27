@@ -2,7 +2,7 @@ import "./routes/api";
 import "./routes/user";
 import "./routes/bet";
 
-import { handleRequest } from "./router";
+import { handleRequest, NOT_FOUND } from "./router";
 import { crawlMatches, saveMatchesToDB } from "./crawler";
 
 function parseScore(score: string): { home: number; away: number } {
@@ -134,11 +134,18 @@ interface Env {
 	API_KEY: string;
 	DB: D1Database;
 	MYBROWSER: Browser;
+	ASSETS: Fetcher;
 }
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return handleRequest(request, env, ctx);
+		const result = handleRequest(request, env, ctx);
+		
+		if (result === NOT_FOUND) {
+			return env.ASSETS.fetch(request);
+		}
+		
+		return result;
 	},
 
 	async scheduled(event, env, ctx): Promise<void> {
