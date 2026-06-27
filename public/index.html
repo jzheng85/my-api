@@ -13,9 +13,9 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #e8f4fc 0%, #f0f8ff 100%);
             min-height: 100vh;
-            color: #fff;
+            color: #1a365d;
         }
 
         .container {
@@ -29,16 +29,17 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 2px solid #0066cc;
             margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
         }
 
         header h1 {
             font-size: 24px;
-            background: linear-gradient(90deg, #00d4ff, #7c3aed);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: #0066cc;
         }
 
         .user-info {
@@ -48,10 +49,11 @@
         }
 
         .points-badge {
-            background: linear-gradient(90deg, #f59e0b, #d97706);
+            background: linear-gradient(90deg, #0066cc, #00a8e6);
             padding: 8px 16px;
             border-radius: 20px;
             font-weight: bold;
+            color: white;
         }
 
         .btn {
@@ -65,23 +67,23 @@
         }
 
         .btn-primary {
-            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            background: linear-gradient(90deg, #0066cc, #00a8e6);
             color: white;
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.4);
+            box-shadow: 0 4px 15px rgba(0, 102, 204, 0.4);
         }
 
         .btn-secondary {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0, 102, 204, 0.1);
+            color: #0066cc;
+            border: 1px solid #0066cc;
         }
 
         .btn-secondary:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(0, 102, 204, 0.2);
         }
 
         .btn-danger {
@@ -90,17 +92,18 @@
         }
 
         .card {
-            background: rgba(255,255,255,0.05);
+            background: white;
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 24px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid #0066cc;
+            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
         }
 
         .card h2 {
             font-size: 18px;
             margin-bottom: 20px;
-            color: #00d4ff;
+            color: #0066cc;
         }
 
         .form-group {
@@ -111,24 +114,26 @@
             display: block;
             margin-bottom: 8px;
             font-size: 14px;
-            color: rgba(255,255,255,0.7);
+            color: #4a5568;
+            font-weight: 600;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
             padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: #f0f8ff;
+            border: 2px solid #0066cc;
             border-radius: 8px;
-            color: white;
+            color: #1a365d;
             font-size: 14px;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: #00d4ff;
+            border-color: #00a8e6;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
         }
 
         .match-list {
@@ -138,10 +143,11 @@
         }
 
         .match-card {
-            background: rgba(255,255,255,0.05);
+            background: white;
             border-radius: 12px;
             padding: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 2px solid #0066cc;
+            box-shadow: 0 2px 10px rgba(0, 102, 204, 0.1);
         }
 
         .match-header {
@@ -153,32 +159,34 @@
 
         .match-league {
             font-size: 12px;
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
+            color: white;
+            background: #0066cc;
             padding: 4px 8px;
             border-radius: 4px;
+            font-weight: bold;
         }
 
         .match-status {
             font-size: 12px;
             padding: 4px 8px;
             border-radius: 4px;
+            font-weight: bold;
         }
 
         .status-pending {
             background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
+            color: #d97706;
         }
 
         .status-live {
             background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
+            color: #16a34a;
             animation: pulse 2s infinite;
         }
 
         .status-ended {
             background: rgba(156, 163, 175, 0.2);
-            color: #9ca3af;
+            color: #6b7280;
         }
 
         @keyframes pulse {
@@ -202,12 +210,13 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 8px;
+            color: #1a365d;
         }
 
         .match-score {
             font-size: 24px;
             font-weight: bold;
-            color: #00d4ff;
+            color: #0066cc;
             padding: 0 20px;
         }
 
@@ -219,7 +228,7 @@
         }
 
         .odds-item {
-            background: rgba(255,255,255,0.1);
+            background: #f0f8ff;
             padding: 12px;
             border-radius: 8px;
             text-align: center;
@@ -229,30 +238,48 @@
         }
 
         .odds-item:hover {
-            background: rgba(255,255,255,0.15);
+            background: #e8f4fc;
+            border-color: #0066cc;
         }
 
         .odds-item.selected {
-            border-color: #00d4ff;
-            background: rgba(0, 212, 255, 0.2);
+            border-color: #0066cc;
+            background: rgba(0, 102, 204, 0.15);
         }
 
         .odds-label {
             font-size: 12px;
-            color: rgba(255,255,255,0.6);
+            color: #4a5568;
             margin-bottom: 4px;
+            font-weight: 600;
         }
 
         .odds-value {
             font-size: 18px;
             font-weight: bold;
-            color: #fbbf24;
+            color: #0066cc;
+        }
+
+        .odds-handicap {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #0066cc, #00a8e6);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .handicap-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
         }
 
         .bet-section {
             margin-top: 20px;
             padding-top: 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            border-top: 2px solid #0066cc;
         }
 
         .bet-input {
@@ -264,16 +291,17 @@
         .bet-input input {
             flex: 1;
             padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
+            background: #f0f8ff;
+            border: 2px solid #0066cc;
             border-radius: 8px;
-            color: white;
+            color: #1a365d;
             font-size: 14px;
         }
 
         .bet-input input:focus {
             outline: none;
-            border-color: #00d4ff;
+            border-color: #00a8e6;
+            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
         }
 
         .bets-list {
@@ -286,9 +314,10 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px;
-            background: rgba(255,255,255,0.05);
+            background: #f0f8ff;
             border-radius: 8px;
             margin-bottom: 12px;
+            border: 1px solid #0066cc;
         }
 
         .bet-info {
@@ -299,11 +328,12 @@
             font-size: 14px;
             font-weight: 600;
             margin-bottom: 4px;
+            color: #1a365d;
         }
 
         .bet-details {
             font-size: 12px;
-            color: rgba(255,255,255,0.6);
+            color: #4a5568;
         }
 
         .bet-result {
@@ -314,17 +344,17 @@
 
         .bet-pending {
             background: rgba(251, 191, 36, 0.2);
-            color: #fbbf24;
+            color: #d97706;
         }
 
         .bet-won {
             background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
+            color: #16a34a;
         }
 
         .bet-lost {
             background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
+            color: #dc2626;
         }
 
         .hidden {
@@ -339,17 +369,23 @@
 
         .tab {
             padding: 10px 20px;
-            background: rgba(255,255,255,0.1);
-            border: none;
+            background: #f0f8ff;
+            border: 2px solid #0066cc;
             border-radius: 8px;
-            color: white;
+            color: #0066cc;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 600;
             transition: all 0.3s ease;
         }
 
+        .tab:hover {
+            background: #e8f4fc;
+        }
+
         .tab.active {
-            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            background: linear-gradient(90deg, #0066cc, #00a8e6);
+            color: white;
         }
 
         .alert {
@@ -357,18 +393,19 @@
             border-radius: 8px;
             margin-bottom: 16px;
             font-size: 14px;
+            font-weight: 600;
         }
 
         .alert-success {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            border: 2px solid #16a34a;
         }
 
         .alert-error {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 2px solid #dc2626;
         }
 
         .login-form {
