@@ -146,8 +146,9 @@ async function loadMatches() {
     try {
         const response = await apiRequest('/api/matches');
         if (response.ok) {
-            const matches = await response.json();
-            renderMatches(matches);
+            const allMatches = await response.json();
+            const pendingMatches = allMatches.filter(m => m.match_status !== 'ended');
+            renderMatches(pendingMatches);
         } else {
             showAlert('加载比赛失败', 'error');
         }
@@ -172,20 +173,57 @@ function renderMatches(matches) {
         
         if (!isEnded) {
             oddsSection = `
-                <div class="odds-grid">
-                    <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'win', ${match.winOdds})">
-                        <div class="odds-label">主胜</div>
-                        <div class="odds-value">${match.winOdds}</div>
-                    </div>
-                    <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'draw', ${match.drawOdds})">
-                        <div class="odds-label">平局</div>
-                        <div class="odds-value">${match.drawOdds}</div>
-                    </div>
-                    <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'lose', ${match.loseOdds})">
-                        <div class="odds-label">客胜</div>
-                        <div class="odds-value">${match.loseOdds}</div>
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #00d4ff; margin-bottom: 8px;">胜平负 (1x2)</div>
+                    <div class="odds-grid">
+                        <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'win', ${match.winOdds})">
+                            <div class="odds-label">主胜</div>
+                            <div class="odds-value">${match.winOdds}</div>
+                        </div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'draw', ${match.drawOdds})">
+                            <div class="odds-label">平局</div>
+                            <div class="odds-value">${match.drawOdds}</div>
+                        </div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', '1x2', 'lose', ${match.loseOdds})">
+                            <div class="odds-label">客胜</div>
+                            <div class="odds-value">${match.loseOdds}</div>
+                        </div>
                     </div>
                 </div>
+                
+                ${match.handicap ? `
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #7c3aed; margin-bottom: 8px;">让球 (AH) ${match.handicap}</div>
+                    <div class="odds-grid">
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ah', 'home', ${match.handicapHomeOdds})">
+                            <div class="odds-label">主队让球赢</div>
+                            <div class="odds-value">${match.handicapHomeOdds}</div>
+                        </div>
+                        <div style="visibility: hidden;"></div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ah', 'away', ${match.handicapAwayOdds})">
+                            <div class="odds-label">客队让球赢</div>
+                            <div class="odds-value">${match.handicapAwayOdds}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                ${match.totalGoals ? `
+                <div style="margin-bottom: 15px;">
+                    <div style="font-size: 12px; color: #f59e0b; margin-bottom: 8px;">大小球 (OU) ${match.totalGoals}</div>
+                    <div class="odds-grid">
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'over', ${match.overOdds})">
+                            <div class="odds-label">大球</div>
+                            <div class="odds-value">${match.overOdds}</div>
+                        </div>
+                        <div style="visibility: hidden;"></div>
+                        <div class="odds-item" onclick="selectOdds('${match.id}', 'ou', 'under', ${match.underOdds})">
+                            <div class="odds-label">小球</div>
+                            <div class="odds-value">${match.underOdds}</div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
             `;
             
             betSection = `
