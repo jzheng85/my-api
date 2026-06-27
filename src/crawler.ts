@@ -15,6 +15,8 @@ export interface MatchData {
 	totalGoals: string;
 	overOdds: string;
 	underOdds: string;
+	dSt2: string;
+	dStIng: string;
 }
 
 async function executeWithRetry<T>(fn: () => Promise<T>, maxRetries: number = 3, delayMs: number = 1000): Promise<T> {
@@ -115,6 +117,8 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 							uls.forEach(ul => {
 								const lis = ul.querySelectorAll('li');
 								const matchId = ul.getAttribute('id') || '';
+								const dSt2 = ul.getAttribute('d-st2') || '';
+								const dStIng = ul.getAttribute('d-st-ing') || '';
 								let league = '';
 								let homeTeam = '';
 								let awayTeam = '';
@@ -212,6 +216,8 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 										totalGoals,
 										overOdds,
 										underOdds,
+										dSt2,
+										dStIng,
 									});
 								}
 							});
@@ -236,15 +242,27 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 	});
 }
 
+function determineMatchStatus(dSt2: string, dStIng: string): string {
+	if (dSt2 === 'wait') {
+		return 'pending';
+	}
+	if (dSt2 === 'ok') {
+		return dStIng === '1' ? 'live' : 'ended';
+	}
+	return 'pending';
+}
+
 export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Promise<void> {
 	if (matches.length === 0) return;
 	
 	const now = new Date().toISOString();
 	
 	for (const match of matches) {
+		const matchStatus = determineMatchStatus(match.dSt2, match.dStIng);
+		
 		await db.prepare(
-			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, totalGoals, overOdds, underOdds, createdAt)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			`INSERT OR REPLACE INTO matches (id, league, homeTeam, awayTeam, score, handicap, winOdds, drawOdds, loseOdds, handicapHomeOdds, handicapAwayOdds, totalGoals, overOdds, underOdds, d_st2, d_st_ing, match_status, createdAt)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		).bind(
 			match.id,
 			match.league,
@@ -260,6 +278,9 @@ export async function saveMatchesToDB(db: D1Database, matches: MatchData[]): Pro
 			match.totalGoals,
 			match.overOdds,
 			match.underOdds,
+			match.dSt2,
+			match.dStIng,
+			matchStatus,
 			now
 		).run();
 	}

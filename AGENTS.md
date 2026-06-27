@@ -125,7 +125,9 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | overOdds | TEXT | 大球赔率 |
 | underOdds | TEXT | 小球赔率 |
 | createdAt | TEXT | 创建时间 |
-| match_status | TEXT | 状态（live/ended） |
+| d_st2 | TEXT | 比赛状态标识（wait=未开始，ok=已开场） |
+| d_st_ing | TEXT | 比赛进行中标识（0=未进行，1=进行中） |
+| match_status | TEXT | 状态（pending/live/ended） |
 
 ## API 接口
 
@@ -166,6 +168,16 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 - `handicap` 值：d-pk 属性 > 0 时加 '+'，< 0 时加 '-'，= 0 时不加符号
 - ul 元素只选择 d-st 属性值为 0 的
 - `score` 值：读取前3个 span 元素的 value 属性并拼接
+- `d-st2` 属性：比赛状态标识（wait=未开始，ok=已开场）
+- `d-st-ing` 属性：比赛进行中标识（0=未进行，1=进行中）
+
+### 比赛状态判定逻辑
+
+| d-st2 | d-st-ing | match_status | 说明 |
+|-------|----------|--------------|------|
+| wait | - | pending | 未开始 |
+| ok | 1 | live | 比赛进行中 |
+| ok | 0 | ended | 比赛已结束 |
 
 ## 数据库迁移文件
 
@@ -174,6 +186,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `migrations/001_initial.sql` | 创建 users 和 bets 表，给 matches 表添加 match_status 字段 |
 | `migrations/002_add_settlement_fields.sql` | 给 bets 表添加 payout、settled_at、match_result 字段 |
 | `migrations/003_add_bet_handicap_fields.sql` | 给 bets 表添加 handicap_at_bet、total_goals_at_bet 字段 |
+| `migrations/004_add_match_status_fields.sql` | 给 matches 表添加 d_st2、d_st_ing 字段 |
 
 ### 执行迁移命令
 
@@ -182,9 +195,11 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 npx wrangler d1 execute my-db --file migrations/001_initial.sql
 npx wrangler d1 execute my-db --file migrations/002_add_settlement_fields.sql
 npx wrangler d1 execute my-db --file migrations/003_add_bet_handicap_fields.sql
+npx wrangler d1 execute my-db --file migrations/004_add_match_status_fields.sql
 
 # 远程数据库
 npx wrangler d1 execute my-db --remote --file migrations/001_initial.sql
 npx wrangler d1 execute my-db --remote --file migrations/002_add_settlement_fields.sql
 npx wrangler d1 execute my-db --remote --file migrations/003_add_bet_handicap_fields.sql
+npx wrangler d1 execute my-db --remote --file migrations/004_add_match_status_fields.sql
 ```

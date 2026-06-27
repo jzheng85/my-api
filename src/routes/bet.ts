@@ -109,7 +109,7 @@ POST("/api/bets", async (request, env) => {
 			return Response.json({ error: "比赛不存在" }, { status: 404 });
 		}
 		
-		if ((match.match_status as string) !== 'live') {
+		if ((match.match_status as string) === 'ended') {
 			return Response.json({ error: "比赛已结束，无法投注" }, { status: 400 });
 		}
 		

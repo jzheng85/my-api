@@ -1,0 +1,2 @@
+ALTER TABLE matches ADD COLUMN d_st2 TEXT;
+ALTER TABLE matches ADD COLUMN d_st_ing TEXT;
