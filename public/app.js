@@ -133,6 +133,7 @@ function switchTab(tab) {
     document.getElementById('matchesTab').classList.add('hidden');
     document.getElementById('betsTab').classList.add('hidden');
     document.getElementById('transactionsTab').classList.add('hidden');
+    document.getElementById('adminTab').classList.add('hidden');
 
     if (tab === 'matches') {
         document.querySelectorAll('.tab')[0].classList.add('active');
@@ -145,6 +146,11 @@ function switchTab(tab) {
         document.querySelectorAll('.tab')[2].classList.add('active');
         document.getElementById('transactionsTab').classList.remove('hidden');
         loadTransactions();
+    } else if (tab === 'admin') {
+        document.querySelectorAll('.tab')[3].classList.add('active');
+        document.getElementById('adminTab').classList.remove('hidden');
+        loadAdminUsers();
+        loadAdminMatches();
     }
 }
 
@@ -464,8 +470,20 @@ async function updateUserInfo() {
         if (response.ok) {
             const data = await response.json();
             user.points = data.points;
+            user.username = data.username;
             localStorage.setItem('user', JSON.stringify(user));
             document.getElementById('pointsBadge').textContent = data.points;
+            document.getElementById('usernameBadge').textContent = `用户: ${user.username}`;
+            
+            const adminTabBtn = document.getElementById('adminTabBtn');
+            if (adminTabBtn) {
+                if (user.username === 'admin') {
+                    adminTabBtn.style.display = 'block';
+                } else {
+                    adminTabBtn.style.display = 'none';
+                    document.getElementById('adminTab').classList.add('hidden');
+                }
+            }
         }
     } catch (error) {
         console.error('更新用户信息失败', error);
@@ -536,19 +554,37 @@ function getTransactionTypeText(type) {
     return map[type] || type;
 }
 
-function showRechargeModal() {
-    document.getElementById('rechargeModal').classList.remove('hidden');
+async function loadAdminUsers() {
+    try {
+        const response = await fetch('/api/admin/users');
+        if (response.ok) {
+            const users = await response.json();
+            const select = document.getElementById('adminUsername');
+            select.innerHTML = '<option value="">请选择用户</option>';
+            
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.username;
+                option.textContent = `${user.username} (积分: ${user.points})`;
+                select.appendChild(option);
+            });
+        } else {
+            showAlert('加载用户列表失败', 'error');
+        }
+    } catch (error) {
+        showAlert('加载用户列表失败', 'error');
+    }
 }
 
-function closeRechargeModal() {
-    document.getElementById('rechargeModal').classList.add('hidden');
-    document.getElementById('rechargeAmount').value = '';
-    document.getElementById('rechargeSecret').value = '';
-}
+async function adminRecharge() {
+    const username = document.getElementById('adminUsername').value;
+    const amount = parseInt(document.getElementById('adminRechargeAmount').value);
+    const secret = document.getElementById('adminSecret').value;
 
-async function recharge() {
-    const amount = parseInt(document.getElementById('rechargeAmount').value);
-    const secret = document.getElementById('rechargeSecret').value;
+    if (!username) {
+        showAlert('请选择用户', 'error');
+        return;
+    }
 
     if (!amount || amount <= 0) {
         showAlert('请输入有效的充值金额', 'error');
@@ -556,22 +592,24 @@ async function recharge() {
     }
 
     if (!secret) {
-        showAlert('请输入充值密钥', 'error');
+        showAlert('请输入管理密钥', 'error');
         return;
     }
 
     try {
-        const response = await fetch('/api/user/recharge', {
+        const response = await fetch('/api/admin/recharge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.id, amount, secret })
+            body: JSON.stringify({ username, amount, secret })
         });
 
         if (response.ok) {
-            showAlert('充值成功！', 'success');
-            closeRechargeModal();
-            updateUserInfo();
-            loadTransactions();
+            const data = await response.json();
+            showAlert(`充值成功！${username} 当前积分: ${data.balanceAfter}`, 'success');
+            document.getElementById('adminUsername').value = '';
+            document.getElementById('adminRechargeAmount').value = '';
+            document.getElementById('adminSecret').value = '';
+            document.getElementById('adminUserResult').innerHTML = '';
         } else {
             const error = await response.json();
             showAlert(error.error, 'error');
@@ -581,9 +619,109 @@ async function recharge() {
     }
 }
 
+async function loadAdminMatches() {
+    try {
+        const response = await apiRequest('/api/matches');
+        if (response.ok) {
+            const matches = await response.json();
+            renderAdminMatches(matches);
+        } else {
+            showAlert('加载比赛失败', 'error');
+        }
+    } catch (error) {
+        showAlert('加载比赛失败', 'error');
+    }
+}
+
+function renderAdminMatches(matches) {
+    const container = document.getElementById('adminMatchesList');
+    
+    if (matches.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div style="font-size: 48px; margin-bottom: 16px;">⚽</div>
+                <h3>暂无比赛数据</h3>
+                <p>当前没有比赛记录</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = matches.map(match => {
+        return `
+            <div class="bet-item">
+                <div class="bet-info">
+                    <div class="bet-match">${match.homeTeam} vs ${match.awayTeam}</div>
+                    <div class="bet-details">
+                        ${match.league} | 当前比分: ${match.score || '-'} | 状态: ${match.match_status === 'pending' ? '未开始' : match.match_status === 'live' ? '进行中' : '已结束'}
+                    </div>
+                    <div class="bet-details" style="margin-top: 8px;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="adminScore-${match.id}" placeholder="输入比分如 2:1" style="padding: 4px 8px; font-size: 12px; width: 120px;">
+                            <button class="btn btn-primary" style="padding: 4px 12px; font-size: 12px;" onclick="settleMatch('${match.id}')">结算比赛</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="bet-result ${match.match_status === 'ended' ? 'bet-won' : 'bet-pending'}">
+                    ${match.match_status === 'ended' ? '已结算' : '待结算'}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function settleMatch(matchId) {
+    const scoreInput = document.getElementById(`adminScore-${matchId}`);
+    const score = scoreInput.value;
+    const secret = document.getElementById('adminSecret').value;
+
+    if (!score || !score.includes(':')) {
+        showAlert('请输入有效的比分格式（如 2:1）', 'error');
+        return;
+    }
+
+    if (!secret) {
+        showAlert('请先输入管理密钥', 'error');
+        return;
+    }
+
+    try {
+        const updateResponse = await fetch('/api/admin/settle-match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matchId, score, secret })
+        });
+
+        if (!updateResponse.ok) {
+            const error = await updateResponse.json();
+            showAlert(error.error, 'error');
+            return;
+        }
+
+        const settleResponse = await apiRequest(`/api/bets/settle/${matchId}`, {
+            method: 'POST'
+        });
+
+        if (settleResponse.ok) {
+            showAlert('比赛结算成功！', 'success');
+            loadAdminMatches();
+        } else {
+            const error = await settleResponse.json();
+            showAlert(error.error, 'error');
+        }
+    } catch (error) {
+        showAlert('结算失败', 'error');
+    }
+}
+
 function init() {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
+    
+    const adminTabBtn = document.getElementById('adminTabBtn');
+    if (adminTabBtn) {
+        adminTabBtn.style.display = 'none';
+    }
     
     if (savedToken && savedUser) {
         token = savedToken;

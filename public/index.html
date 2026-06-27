@@ -506,6 +506,10 @@
             animation: fadeIn 0.2s ease;
         }
 
+        .modal.hidden {
+            display: none;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -721,6 +725,7 @@
         <header>
             <h1><span class="logo-icon">61X</span>61X趣味积分竞猜</h1>
             <div class="user-info" id="userInfo">
+                <span id="usernameBadge" style="font-size: 14px; color: var(--text-secondary); margin-right: 16px;">用户名</span>
                 <span class="points-badge"><span class="points-icon">🏆</span>积分: <span id="pointsBadge">0</span></span>
                 <button class="btn btn-danger" onclick="logout()">退出登录</button>
             </div>
@@ -771,6 +776,7 @@
                 <button class="tab active" onclick="switchTab('matches')">比赛列表</button>
                 <button class="tab" onclick="switchTab('bets')">投注记录</button>
                 <button class="tab" onclick="switchTab('transactions')">积分明细</button>
+                <button class="tab" id="adminTabBtn" onclick="switchTab('admin')">管理</button>
             </div>
 
             <div id="matchesTab">
@@ -798,10 +804,7 @@
 
             <div id="transactionsTab" class="hidden">
                 <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h2>积分明细</h2>
-                        <button class="btn btn-secondary" onclick="showRechargeModal()">充值</button>
-                    </div>
+                    <h2>积分明细</h2>
                     <div id="transactionsList" class="bets-list">
                         <div class="empty-state">
                             <div style="font-size: 48px; margin-bottom: 16px;">📊</div>
@@ -811,31 +814,43 @@
                     </div>
                 </div>
             </div>
+
+            <div id="adminTab" class="hidden">
+                <div class="card">
+                    <h2>用户充值</h2>
+                    <div class="form-group">
+                        <label>用户名</label>
+                        <select id="adminUsername">
+                            <option value="">请选择用户</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>充值金额</label>
+                        <input type="number" id="adminRechargeAmount" placeholder="输入充值积分" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>管理密钥</label>
+                        <input type="password" id="adminSecret" placeholder="输入管理密钥">
+                    </div>
+                    <button class="btn btn-primary" onclick="adminRecharge()">确认充值</button>
+                    <div id="adminUserResult" style="margin-top: 16px;"></div>
+                </div>
+
+                <div class="card">
+                    <h2>比赛结算</h2>
+                    <div id="adminMatchesList" class="bets-list">
+                        <div class="empty-state">
+                            <div style="font-size: 48px; margin-bottom: 16px;">⚽</div>
+                            <h3>加载中...</h3>
+                            <p>正在获取比赛数据</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="rechargeModal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>充值积分</h3>
-                <button class="modal-close" onclick="closeRechargeModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>充值金额</label>
-                    <input type="number" id="rechargeAmount" placeholder="输入充值积分" min="1">
-                </div>
-                <div class="form-group">
-                    <label>充值密钥</label>
-                    <input type="password" id="rechargeSecret" placeholder="输入充值密钥">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeRechargeModal()">取消</button>
-                <button class="btn btn-primary" onclick="recharge()">确认充值</button>
-            </div>
-        </div>
-    </div>
+    
 
     <script src="app.js"></script>
 </body>

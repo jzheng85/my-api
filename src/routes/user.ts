@@ -215,3 +215,78 @@ POST("/api/user/recharge", async (request, env) => {
 		return Response.json({ error: "充值失败" }, { status: 500 });
 	}
 });
+
+GET("/api/admin/users", async (request, env) => {
+	try {
+		const url = new URL(request.url);
+		const username = url.searchParams.get('username');
+		
+		let query = "SELECT id, username, points, created_at FROM users";
+		const params: any[] = [];
+		
+		if (username) {
+			query += " WHERE username LIKE ?";
+			params.push(`%${username}%`);
+		}
+		
+		query += " ORDER BY created_at DESC LIMIT 20";
+		
+		const users = await env.DB.prepare(query)
+			.bind(...params)
+			.all();
+		
+		return Response.json(users.results || []);
+	} catch (error) {
+		console.error("查询用户失败:", error);
+		return Response.json({ error: "查询用户失败" }, { status: 500 });
+	}
+});
+
+POST("/api/admin/recharge", async (request, env) => {
+	try {
+		const { username, amount, secret } = await request.json();
+		
+		if (!username || !amount || !secret) {
+			return Response.json({ error: "参数不完整" }, { status: 400 });
+		}
+		
+		if (secret !== env.RECHARGE_SECRET) {
+			return Response.json({ error: "无效的密钥" }, { status: 401 });
+		}
+		
+		if (amount <= 0) {
+			return Response.json({ error: "充值积分必须大于0" }, { status: 400 });
+		}
+		
+		const user = await env.DB.prepare("SELECT id, points FROM users WHERE username = ?")
+			.bind(username)
+			.first();
+		
+		if (!user) {
+			return Response.json({ error: "用户不存在" }, { status: 404 });
+		}
+		
+		const userId = user.id;
+		const newBalance = (user.points as number) + amount;
+		
+		const batch = await env.DB.batch([
+			env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+				.bind(amount, userId),
+			env.DB.prepare(
+				"INSERT INTO point_transactions (user_id, type, amount, balance_after, description) VALUES (?, ?, ?, ?, ?)"
+			)
+				.bind(userId, 'recharge', amount, newBalance, '管理后台充值')
+		]);
+		
+		return Response.json({ 
+			userId,
+			username,
+			amount,
+			balanceAfter: newBalance,
+			transactionId: (batch[1] as any).lastInsertRowid
+		}, { status: 201 });
+	} catch (error) {
+		console.error("管理后台充值失败:", error);
+		return Response.json({ error: "充值失败" }, { status: 500 });
+	}
+});
