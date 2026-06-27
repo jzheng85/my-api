@@ -144,7 +144,15 @@ export async function crawlMatches(browserBinding: Browser): Promise<MatchData[]
 									}
 									
 									if (className.includes('c0time')) {
-										matchTime = text;
+										const timeParts = text.split(':');
+										if (timeParts.length === 2) {
+											let hours = parseInt(timeParts[0], 10);
+											const minutes = parseInt(timeParts[1], 10);
+											hours = (hours + 8) % 24;
+											matchTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+										} else {
+											matchTime = text;
+										}
 									}
 									
 									if (className.includes('c0home')) {
