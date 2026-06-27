@@ -284,7 +284,7 @@ describe("API Tests", () => {
 			body: JSON.stringify({
 				userId,
 				amount: 500,
-				secret: "your-recharge-secret-change-in-production",
+				secret: "helloworldcup",
 			}),
 		});
 		expect(rechargeResponse.status).toBe(201);

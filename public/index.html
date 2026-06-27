@@ -478,6 +478,21 @@
             color: #DC2626;
         }
 
+        .bet-half-win {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563EB;
+        }
+
+        .bet-half-lose {
+            background: rgba(249, 115, 22, 0.1);
+            color: #EA580C;
+        }
+
+        .bet-push {
+            background: rgba(107, 114, 128, 0.1);
+            color: #6B7280;
+        }
+
         .tx-credit {
             background: rgba(34, 197, 94, 0.1);
             color: #16A34A;
@@ -827,10 +842,6 @@
                     <div class="form-group">
                         <label>充值金额</label>
                         <input type="number" id="adminRechargeAmount" placeholder="输入充值积分" min="1">
-                    </div>
-                    <div class="form-group">
-                        <label>管理密钥</label>
-                        <input type="password" id="adminSecret" placeholder="输入管理密钥">
                     </div>
                     <button class="btn btn-primary" onclick="adminRecharge()">确认充值</button>
                     <div id="adminUserResult" style="margin-top: 16px;"></div>

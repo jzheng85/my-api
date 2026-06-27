@@ -391,6 +391,18 @@ function renderBets(bets) {
         } else if (bet.status === 'lost') {
             resultText = '输';
             resultClass = 'bet-lost';
+        } else if (bet.status === 'half_win') {
+            resultText = '赢半';
+            resultClass = 'bet-half-win';
+            payoutText = `+${bet.payout} 积分`;
+        } else if (bet.status === 'half_lose') {
+            resultText = '输半';
+            resultClass = 'bet-half-lose';
+            payoutText = `+${bet.payout} 积分`;
+        } else if (bet.status === 'push') {
+            resultText = '走水';
+            resultClass = 'bet-push';
+            payoutText = `+${bet.payout} 积分`;
         }
 
         const homeTeam = bet.homeTeam || '未知主队';
@@ -406,6 +418,12 @@ function renderBets(bets) {
             pointsText = `预计赢 ${expectedPayout} 积分`;
         } else if (bet.status === 'won') {
             pointsText = `赢 ${bet.payout} 积分`;
+        } else if (bet.status === 'half_win') {
+            pointsText = `赢半 ${bet.payout} 积分`;
+        } else if (bet.status === 'half_lose') {
+            pointsText = `输半，返还 ${bet.payout} 积分`;
+        } else if (bet.status === 'push') {
+            pointsText = `走水，返还 ${bet.payout} 积分`;
         } else {
             pointsText = `输 ${bet.points} 积分`;
         }
@@ -549,6 +567,8 @@ function getTransactionTypeText(type) {
         'bet': '投注扣款',
         'settle_win': '结算赢',
         'settle_lose': '结算输',
+        'settle_half_win': '结算赢半',
+        'settle_half_lose': '结算输半',
         'recharge': '充值'
     };
     return map[type] || type;
@@ -556,7 +576,7 @@ function getTransactionTypeText(type) {
 
 async function loadAdminUsers() {
     try {
-        const response = await fetch('/api/admin/users');
+        const response = await apiRequest('/api/admin/users');
         if (response.ok) {
             const users = await response.json();
             const select = document.getElementById('adminUsername');
@@ -579,7 +599,6 @@ async function loadAdminUsers() {
 async function adminRecharge() {
     const username = document.getElementById('adminUsername').value;
     const amount = parseInt(document.getElementById('adminRechargeAmount').value);
-    const secret = document.getElementById('adminSecret').value;
 
     if (!username) {
         showAlert('请选择用户', 'error');
@@ -591,16 +610,11 @@ async function adminRecharge() {
         return;
     }
 
-    if (!secret) {
-        showAlert('请输入管理密钥', 'error');
-        return;
-    }
-
     try {
-        const response = await fetch('/api/admin/recharge', {
+        const response = await apiRequest('/api/admin/recharge', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, amount, secret })
+            body: JSON.stringify({ username, amount })
         });
 
         if (response.ok) {
@@ -608,8 +622,8 @@ async function adminRecharge() {
             showAlert(`充值成功！${username} 当前积分: ${data.balanceAfter}`, 'success');
             document.getElementById('adminUsername').value = '';
             document.getElementById('adminRechargeAmount').value = '';
-            document.getElementById('adminSecret').value = '';
             document.getElementById('adminUserResult').innerHTML = '';
+            loadAdminUsers();
         } else {
             const error = await response.json();
             showAlert(error.error, 'error');
@@ -673,23 +687,17 @@ function renderAdminMatches(matches) {
 async function settleMatch(matchId) {
     const scoreInput = document.getElementById(`adminScore-${matchId}`);
     const score = scoreInput.value;
-    const secret = document.getElementById('adminSecret').value;
 
     if (!score || !score.includes(':')) {
         showAlert('请输入有效的比分格式（如 2:1）', 'error');
         return;
     }
 
-    if (!secret) {
-        showAlert('请先输入管理密钥', 'error');
-        return;
-    }
-
     try {
-        const updateResponse = await fetch('/api/admin/settle-match', {
+        const updateResponse = await apiRequest('/api/admin/settle-match', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ matchId, score, secret })
+            body: JSON.stringify({ matchId, score })
         });
 
         if (!updateResponse.ok) {

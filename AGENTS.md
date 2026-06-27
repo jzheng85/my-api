@@ -73,6 +73,23 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 - **关键特性**：结算时使用投注时的盘口值（handicap_at_bet/total_goals_at_bet），而非当前盘口，确保公平性
 - **赔率计算**：网站显示的赔率为净赔率（不含本金），结算时返还 = 投注积分 × (赔率 + 1)（含本金）
 - **比赛结束判定**：依赖 match_status 字段，不依赖比分（允许0:0终场）
+- **走地结算（Asian Handicap Split Ball）**：支持盘口值为分数形式（如 +2/2.5、2.5/3），投注会被拆分成两个独立的半注，每个半注独立结算后合并结果
+
+#### 走地结算逻辑
+当盘口值包含 `/`（如 `+2/2.5`、`2.5/3`）时，投注被拆分成两个半注：
+
+| 状态 | 说明 | 返还计算 |
+|------|------|----------|
+| `won` | 全赢 | 投注积分 × (赔率 + 1) |
+| `half_win` | 赢半 | (一半本金 × (赔率+1)) + 一半本金 |
+| `push` | 走水 | 全额返还本金 |
+| `half_lose` | 输半 | 返还一半本金 |
+| `lost` | 全输 | 0 |
+
+**示例**：盘口 `+2/2.5`，比分 `0:2`，投注 `home`（主队让球赢）
+- 半注1（+2）：调整后比分 = 0 + 2 = 2，2 = 2 → **走水**（返还一半本金）
+- 半注2（+2.5）：调整后比分 = 0 + 2.5 = 2.5，2.5 > 2 → **赢**（按赔率返还一半本金 + 利润）
+- 合并结果：**赢半**
 
 ### 5. JWT 认证
 - 用户登录时生成 JWT Token，有效期24小时
@@ -107,7 +124,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | odds_at_bet | REAL | - | 投注时的赔率 |
 | handicap_at_bet | TEXT | - | 投注时的让球盘口（AH投注时记录） |
 | total_goals_at_bet | TEXT | - | 投注时的大小球盘口（OU投注时记录） |
-| status | TEXT | 'pending' | 状态（pending/won/lost） |
+| status | TEXT | 'pending' | 状态（pending/won/lost/half_win/half_lose/push） |
 | created_at | TEXT | CURRENT_TIMESTAMP | 创建时间 |
 | payout | INTEGER | 0 | 返还积分 |
 | settled_at | TEXT | null | 结算时间 |
@@ -143,7 +160,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 |------|------|--------|------|
 | id | INTEGER | - | 主键，自增 |
 | user_id | INTEGER | - | 用户ID（外键） |
-| type | TEXT | - | 流水类型（register/bet/settle_win/settle_lose/recharge） |
+| type | TEXT | - | 流水类型（register/bet/settle_win/settle_lose/settle_half_win/settle_half_lose/recharge） |
 | amount | INTEGER | - | 变动积分（正数为增加，负数为减少） |
 | balance_after | INTEGER | - | 变动后的余额 |
 | reference_id | INTEGER | null | 关联ID（如bet.id） |
@@ -162,7 +179,15 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `/api/login` | POST | 用户登录（返回JWT Token） | 否 |
 | `/api/user/points` | GET | 查询当前用户积分 | 是 |
 | `/api/user/transactions` | GET | 查询积分明细 | 是 |
-| `/api/user/recharge` | POST | 积分充值（需要密钥） | 否 |
+| `/api/user/recharge` | POST | 积分充值（需要密钥，保留用于外部调用） | 否 |
+
+### 管理接口（仅 admin 用户可用）
+
+| 接口 | 方法 | 功能 | 认证 |
+|------|------|------|------|
+| `/api/admin/users` | GET | 查询用户列表 | 是 |
+| `/api/admin/recharge` | POST | 给指定用户充值（admin权限） | 是 |
+| `/api/admin/settle-match` | POST | 更新比赛比分并标记结束（admin权限） | 是 |
 
 ### 投注接口
 
@@ -212,6 +237,8 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `migrations/003_add_bet_handicap_fields.sql` | 给 bets 表添加 handicap_at_bet、total_goals_at_bet 字段 |
 | `migrations/004_add_match_status_fields.sql` | 给 matches 表添加 d_st2、d_st_ing 字段 |
 | `migrations/005_add_match_time.sql` | 给 matches 表添加 match_time 字段 |
+| `migrations/006_create_point_transactions.sql` | 创建 point_transactions 积分流水表 |
+| `migrations/007_add_half_settlement_types.sql` | 添加 settle_half_win、settle_half_lose 交易类型支持走地结算 |
 
 ### 执行迁移命令
 
@@ -222,6 +249,8 @@ npx wrangler d1 execute my-db --file migrations/002_add_settlement_fields.sql
 npx wrangler d1 execute my-db --file migrations/003_add_bet_handicap_fields.sql
 npx wrangler d1 execute my-db --file migrations/004_add_match_status_fields.sql
 npx wrangler d1 execute my-db --file migrations/005_add_match_time.sql
+npx wrangler d1 execute my-db --file migrations/006_create_point_transactions.sql
+npx wrangler d1 execute my-db --file migrations/007_add_half_settlement_types.sql
 
 # 远程数据库
 npx wrangler d1 execute my-db --remote --file migrations/001_initial.sql
@@ -229,4 +258,6 @@ npx wrangler d1 execute my-db --remote --file migrations/002_add_settlement_fiel
 npx wrangler d1 execute my-db --remote --file migrations/003_add_bet_handicap_fields.sql
 npx wrangler d1 execute my-db --remote --file migrations/004_add_match_status_fields.sql
 npx wrangler d1 execute my-db --remote --file migrations/005_add_match_time.sql
+npx wrangler d1 execute my-db --remote --file migrations/006_create_point_transactions.sql
+npx wrangler d1 execute my-db --remote --file migrations/007_add_half_settlement_types.sql
 ```

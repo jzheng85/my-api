@@ -216,8 +216,12 @@ POST("/api/user/recharge", async (request, env) => {
 	}
 });
 
-GET("/api/admin/users", async (request, env) => {
+GET("/api/admin/users", withAuth(async (request, env, ctx, authUser) => {
 	try {
+		if (authUser.username !== 'admin') {
+			return Response.json({ error: "权限不足" }, { status: 403 });
+		}
+		
 		const url = new URL(request.url);
 		const username = url.searchParams.get('username');
 		
@@ -240,18 +244,18 @@ GET("/api/admin/users", async (request, env) => {
 		console.error("查询用户失败:", error);
 		return Response.json({ error: "查询用户失败" }, { status: 500 });
 	}
-});
+}));
 
-POST("/api/admin/recharge", async (request, env) => {
+POST("/api/admin/recharge", withAuth(async (request, env, ctx, authUser) => {
 	try {
-		const { username, amount, secret } = await request.json();
+		const { username, amount } = await request.json();
 		
-		if (!username || !amount || !secret) {
-			return Response.json({ error: "参数不完整" }, { status: 400 });
+		if (authUser.username !== 'admin') {
+			return Response.json({ error: "权限不足" }, { status: 403 });
 		}
 		
-		if (secret !== env.RECHARGE_SECRET) {
-			return Response.json({ error: "无效的密钥" }, { status: 401 });
+		if (!username || !amount) {
+			return Response.json({ error: "参数不完整" }, { status: 400 });
 		}
 		
 		if (amount <= 0) {
@@ -289,4 +293,4 @@ POST("/api/admin/recharge", async (request, env) => {
 		console.error("管理后台充值失败:", error);
 		return Response.json({ error: "充值失败" }, { status: 500 });
 	}
-});
+}));

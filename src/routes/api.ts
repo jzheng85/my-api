@@ -19,16 +19,16 @@ GET("/api/crawl", withAuth(async (request, env, ctx, user) => {
 	return Response.json({ count: matches.length, matches });
 }));
 
-POST("/api/admin/settle-match", async (request, env) => {
+POST("/api/admin/settle-match", withAuth(async (request, env, ctx, authUser) => {
 	try {
-		const { matchId, score, secret } = await request.json();
+		const { matchId, score } = await request.json();
 		
-		if (!matchId || !score || !secret) {
-			return Response.json({ error: "参数不完整" }, { status: 400 });
+		if (authUser.username !== 'admin') {
+			return Response.json({ error: "权限不足" }, { status: 403 });
 		}
 		
-		if (secret !== env.RECHARGE_SECRET) {
-			return Response.json({ error: "无效的密钥" }, { status: 401 });
+		if (!matchId || !score) {
+			return Response.json({ error: "参数不完整" }, { status: 400 });
 		}
 		
 		if (!score.includes(':')) {
@@ -46,4 +46,4 @@ POST("/api/admin/settle-match", async (request, env) => {
 		console.error("更新比赛比分失败:", error);
 		return Response.json({ error: "更新失败" }, { status: 500 });
 	}
-});
+}));

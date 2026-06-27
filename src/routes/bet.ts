@@ -9,29 +9,29 @@ function parseScore(score: string): { home: number; away: number } {
 	};
 }
 
-function parseHandicap(handicap: string): number {
-	if (!handicap) return 0;
+function parseHandicapValues(handicap: string): number[] {
+	if (!handicap) return [0];
 	
-	let value = handicap.replace(/[+-]/g, "");
+	const sign = handicap.startsWith("-") ? -1 : 1;
+	const value = handicap.replace(/[+-]/g, "");
 	
 	if (value.includes("/")) {
 		const parts = value.split("/");
-		const avg = (parseFloat(parts[0]) + parseFloat(parts[1])) / 2;
-		return handicap.startsWith("-") ? -avg : avg;
+		return parts.map(p => sign * parseFloat(p));
 	}
 	
-	return handicap.startsWith("-") ? -parseFloat(value) : parseFloat(value);
+	return [sign * parseFloat(value)];
 }
 
-function parseTotalGoals(totalGoals: string): number {
-	if (!totalGoals) return 0;
+function parseTotalGoalsValues(totalGoals: string): number[] {
+	if (!totalGoals) return [0];
 	
 	if (totalGoals.includes("/")) {
 		const parts = totalGoals.split("/");
-		return (parseFloat(parts[0]) + parseFloat(parts[1])) / 2;
+		return parts.map(p => parseFloat(p));
 	}
 	
-	return parseFloat(totalGoals);
+	return [parseFloat(totalGoals)];
 }
 
 function determineMatchResult(score: string): string {
@@ -41,37 +41,108 @@ function determineMatchResult(score: string): string {
 	return "draw";
 }
 
-function isBetWon(betType: string, betValue: string, score: string, handicapAtBet: string, totalGoalsAtBet: string): boolean {
+type SettleResult = 'won' | 'lost' | 'half_win' | 'half_lose' | 'push';
+
+function evaluateAHBet(value: number, adjustedHome: number, away: number): SettleResult {
+	if (adjustedHome > away) return 'won';
+	if (adjustedHome < away) return 'lost';
+	return 'push';
+}
+
+function evaluateOUBet(value: number, total: number, betValue: string): SettleResult {
+	if (betValue === 'over') {
+		if (total > value) return 'won';
+		if (total < value) return 'lost';
+		return 'push';
+	} else {
+		if (total < value) return 'won';
+		if (total > value) return 'lost';
+		return 'push';
+	}
+}
+
+function settleBet(betType: string, betValue: string, score: string, handicapAtBet: string, totalGoalsAtBet: string): { status: SettleResult; payoutMultiplier: number } {
 	const { home, away } = parseScore(score);
 	
 	if (betType === "1x2") {
 		const result = determineMatchResult(score);
-		return result === betValue;
+		if (result === betValue) {
+			return { status: 'won', payoutMultiplier: 1 };
+		} else {
+			return { status: 'lost', payoutMultiplier: 0 };
+		}
 	}
 	
 	if (betType === "ah") {
-		const hc = parseHandicap(handicapAtBet);
-		const adjustedHome = home + hc;
+		const hcValues = parseHandicapValues(handicapAtBet);
+		let wonCount = 0;
+		let pushCount = 0;
+		let lostCount = 0;
 		
-		if (betValue === "home") {
-			return adjustedHome > away;
-		} else if (betValue === "away") {
-			return adjustedHome < away;
+		for (const hc of hcValues) {
+			const adjustedHome = home + hc;
+			const result = evaluateAHBet(hc, adjustedHome, away);
+			
+			if (betValue === "home") {
+				if (result === 'won') wonCount++;
+				else if (result === 'push') pushCount++;
+				else lostCount++;
+			} else if (betValue === "away") {
+				if (result === 'lost') wonCount++;
+				else if (result === 'push') pushCount++;
+				else wonCount++;
+			}
+		}
+		
+		const total = hcValues.length;
+		
+		if (wonCount === total) {
+			return { status: 'won', payoutMultiplier: 1 };
+		} else if (lostCount === total) {
+			return { status: 'lost', payoutMultiplier: 0 };
+		} else if (pushCount === total) {
+			return { status: 'push', payoutMultiplier: 0.5 };
+		} else if (wonCount > 0 && lostCount === 0) {
+			return { status: 'half_win', payoutMultiplier: wonCount / total };
+		} else if (lostCount > 0 && wonCount === 0) {
+			return { status: 'half_lose', payoutMultiplier: pushCount / total };
+		} else {
+			return { status: 'half_win', payoutMultiplier: wonCount / total };
 		}
 	}
 	
 	if (betType === "ou") {
 		const total = home + away;
-		const line = parseTotalGoals(totalGoalsAtBet);
+		const lineValues = parseTotalGoalsValues(totalGoalsAtBet);
+		let wonCount = 0;
+		let pushCount = 0;
+		let lostCount = 0;
 		
-		if (betValue === "over") {
-			return total > line;
-		} else if (betValue === "under") {
-			return total < line;
+		for (const line of lineValues) {
+			const result = evaluateOUBet(line, total, betValue);
+			if (result === 'won') wonCount++;
+			else if (result === 'push') pushCount++;
+			else lostCount++;
+		}
+		
+		const totalLines = lineValues.length;
+		
+		if (wonCount === totalLines) {
+			return { status: 'won', payoutMultiplier: 1 };
+		} else if (lostCount === totalLines) {
+			return { status: 'lost', payoutMultiplier: 0 };
+		} else if (pushCount === totalLines) {
+			return { status: 'push', payoutMultiplier: 0.5 };
+		} else if (wonCount > 0 && lostCount === 0) {
+			return { status: 'half_win', payoutMultiplier: wonCount / totalLines };
+		} else if (lostCount > 0 && wonCount === 0) {
+			return { status: 'half_lose', payoutMultiplier: pushCount / totalLines };
+		} else {
+			return { status: 'half_win', payoutMultiplier: wonCount / totalLines };
 		}
 	}
 	
-	return false;
+	return { status: 'lost', payoutMultiplier: 0 };
 }
 
 POST("/api/bets", withAuth(async (request, env, ctx, user) => {
@@ -227,7 +298,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 		const batchOperations: any[] = [];
 		
 		for (const bet of bets) {
-			const won = isBetWon(
+			const settleResult = settleBet(
 				bet.bet_type,
 				bet.bet_value,
 				match.score,
@@ -235,8 +306,27 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 				bet.total_goals_at_bet
 			);
 			
-			const status = won ? "won" : "lost";
-			const payout = won ? Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
+			const status = settleResult.status;
+			let payout = 0;
+			let transactionType = 'settle_lose';
+			
+			if (status === 'won') {
+				payout = Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1));
+				transactionType = 'settle_win';
+			} else if (status === 'half_win') {
+				const stake = bet.points as number;
+				const halfStake = stake / 2;
+				const winPart = Math.round(halfStake * ((bet.odds_at_bet as number) + 1));
+				const pushPart = halfStake;
+				payout = Math.round(winPart + pushPart);
+				transactionType = 'settle_half_win';
+			} else if (status === 'push') {
+				payout = bet.points as number;
+				transactionType = 'settle_win';
+			} else if (status === 'half_lose') {
+				payout = Math.round((bet.points as number) / 2);
+				transactionType = 'settle_half_lose';
+			}
 			
 			batchOperations.push(
 				env.DB.prepare(
@@ -245,7 +335,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 					.bind(status, payout, now, matchResult, bet.id)
 			);
 			
-			if (won) {
+			if (payout > 0) {
 				const currentBalance = userPointsMap.get(bet.user_id) || 0;
 				const newBalance = currentBalance + payout;
 				userPointsMap.set(bet.user_id, newBalance);
@@ -254,21 +344,14 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 					env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 						.bind(payout, bet.user_id)
 				);
-				
-				batchOperations.push(
-					env.DB.prepare(
-						"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
-					)
-						.bind(bet.user_id, 'settle_win', payout, newBalance, bet.id, `结算赢 ${match.homeTeam} vs ${match.awayTeam}`)
-				);
-			} else {
-				batchOperations.push(
-					env.DB.prepare(
-						"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
-					)
-						.bind(bet.user_id, 'settle_lose', 0, userPointsMap.get(bet.user_id) || 0, bet.id, `结算输 ${match.homeTeam} vs ${match.awayTeam}`)
-				);
 			}
+			
+			batchOperations.push(
+				env.DB.prepare(
+					"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+				)
+					.bind(bet.user_id, transactionType, payout, userPointsMap.get(bet.user_id) || 0, bet.id, `结算${status === 'won' ? '赢' : status === 'half_win' ? '赢半' : status === 'push' ? '走水' : status === 'half_lose' ? '输半' : '输'} ${match.homeTeam} vs ${match.awayTeam}`)
+			);
 		}
 		
 		batchOperations.push(
@@ -332,7 +415,7 @@ POST("/api/bets/settle-all", async (request, env) => {
 			const batchOperations: any[] = [];
 			
 			for (const bet of bets) {
-				const won = isBetWon(
+				const settleResult = settleBet(
 					bet.bet_type,
 					bet.bet_value,
 					match.score,
@@ -340,8 +423,27 @@ POST("/api/bets/settle-all", async (request, env) => {
 					bet.total_goals_at_bet
 				);
 				
-				const status = won ? "won" : "lost";
-				const payout = won ? Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1)) : 0;
+				const status = settleResult.status;
+				let payout = 0;
+				let transactionType = 'settle_lose';
+				
+				if (status === 'won') {
+					payout = Math.round((bet.points as number) * ((bet.odds_at_bet as number) + 1));
+					transactionType = 'settle_win';
+				} else if (status === 'half_win') {
+					const stake = bet.points as number;
+					const halfStake = stake / 2;
+					const winPart = Math.round(halfStake * ((bet.odds_at_bet as number) + 1));
+					const pushPart = halfStake;
+					payout = Math.round(winPart + pushPart);
+					transactionType = 'settle_half_win';
+				} else if (status === 'push') {
+					payout = bet.points as number;
+					transactionType = 'settle_win';
+				} else if (status === 'half_lose') {
+					payout = Math.round((bet.points as number) / 2);
+					transactionType = 'settle_half_lose';
+				}
 				
 				batchOperations.push(
 					env.DB.prepare(
@@ -350,7 +452,7 @@ POST("/api/bets/settle-all", async (request, env) => {
 						.bind(status, payout, now, matchResult, bet.id)
 				);
 				
-				if (won) {
+				if (payout > 0) {
 					const currentBalance = userPointsMap.get(bet.user_id) || 0;
 					const newBalance = currentBalance + payout;
 					userPointsMap.set(bet.user_id, newBalance);
@@ -359,21 +461,14 @@ POST("/api/bets/settle-all", async (request, env) => {
 						env.DB.prepare("UPDATE users SET points = points + ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
 							.bind(payout, bet.user_id)
 					);
-					
-					batchOperations.push(
-						env.DB.prepare(
-							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
-						)
-							.bind(bet.user_id, 'settle_win', payout, newBalance, bet.id, `结算赢 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
-					);
-				} else {
-					batchOperations.push(
-						env.DB.prepare(
-							"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
-						)
-							.bind(bet.user_id, 'settle_lose', 0, userPointsMap.get(bet.user_id) || 0, bet.id, `结算输 ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
-					);
 				}
+				
+				batchOperations.push(
+					env.DB.prepare(
+						"INSERT INTO point_transactions (user_id, type, amount, balance_after, reference_id, description) VALUES (?, ?, ?, ?, ?, ?)"
+					)
+						.bind(bet.user_id, transactionType, payout, userPointsMap.get(bet.user_id) || 0, bet.id, `结算${status === 'won' ? '赢' : status === 'half_win' ? '赢半' : status === 'push' ? '走水' : status === 'half_lose' ? '输半' : '输'} ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
+				);
 			}
 			
 			await env.DB.batch(batchOperations);
