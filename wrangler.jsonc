@@ -48,7 +48,7 @@
 	 */
 	"vars": {
 		"JWT_SECRET": "your-secret-key-change-in-production",
-		"RECHARGE_SECRET": "your-recharge-secret-change-in-production"
+		"RECHARGE_SECRET": "helloworldcup"
 	},
 	/**
 	 * Static Assets
