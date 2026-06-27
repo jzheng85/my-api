@@ -1,5 +1,4 @@
 import "./routes/api";
-import "./routes/cup";
 import "./routes/user";
 import "./routes/bet";
 
