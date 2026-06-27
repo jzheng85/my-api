@@ -184,12 +184,30 @@ function renderMatches(matches) {
     }
 
     container.innerHTML = matches.map(match => {
-        const isEnded = match.match_status === 'ended';
+        let matchStatusText = '';
+        let statusClass = '';
+        
+        if (match.d_st2 === 'wait') {
+            matchStatusText = '未开始';
+            statusClass = 'status-pending';
+        } else if (match.d_st2 === 'ok' && match.d_st_ing === '1') {
+            matchStatusText = '进行中';
+            statusClass = 'status-live';
+        } else if (match.d_st2 === 'ok' && match.d_st_ing === '0') {
+            matchStatusText = '已结束';
+            statusClass = 'status-ended';
+        } else {
+            matchStatusText = match.match_status === 'ended' ? '已结束' : match.match_status === 'live' ? '进行中' : '未开始';
+            statusClass = `status-${match.match_status}`;
+        }
+        
+        const canBet = match.d_st2 === 'wait';
+        const isEnded = match.d_st2 === 'ok' && match.d_st_ing === '0';
         
         let oddsSection = '';
         let betSection = '';
         
-        if (!isEnded) {
+        if (canBet) {
             oddsSection = `
                 <div class="odds-section">
                     <div class="odds-title">胜平负 (1x2)</div>
@@ -262,8 +280,8 @@ function renderMatches(matches) {
             <div class="match-card">
                 <div class="match-header">
                     <span class="match-league">${match.league}</span>
-                    <span class="match-status status-${match.match_status}">
-                        ${match.match_status === 'pending' ? '未开始' : match.match_status === 'live' ? '进行中' : '已结束'}
+                    <span class="match-status ${statusClass}">
+                        ${matchStatusText}
                     </span>
                 </div>
                 <div class="match-teams">
@@ -282,7 +300,7 @@ function renderMatches(matches) {
 
                 ${oddsSection}
                 
-                ${isEnded ? '<div style="text-align: center; color: #9ca3af; padding: 10px;">比赛已结束，无法投注</div>' : ''}
+                ${!canBet ? '<div style="text-align: center; color: #9ca3af; padding: 10px;">' + (isEnded ? '比赛已结束，无法投注' : '比赛已开场，无法投注') + '</div>' : ''}
                 
                 ${betSection}
             </div>
@@ -662,12 +680,23 @@ function renderAdminMatches(matches) {
     }
 
     container.innerHTML = matches.map(match => {
+        let adminStatusText = '';
+        if (match.d_st2 === 'wait') {
+            adminStatusText = '未开始';
+        } else if (match.d_st2 === 'ok' && match.d_st_ing === '1') {
+            adminStatusText = '进行中';
+        } else if (match.d_st2 === 'ok' && match.d_st_ing === '0') {
+            adminStatusText = '已结束';
+        } else {
+            adminStatusText = match.match_status === 'ended' ? '已结束' : match.match_status === 'live' ? '进行中' : '未开始';
+        }
+        
         return `
             <div class="bet-item">
                 <div class="bet-info">
                     <div class="bet-match">${match.homeTeam} vs ${match.awayTeam}</div>
                     <div class="bet-details">
-                        ${match.league} | 当前比分: ${match.score || '-'} | 状态: ${match.match_status === 'pending' ? '未开始' : match.match_status === 'live' ? '进行中' : '已结束'}
+                        ${match.league} | 当前比分: ${match.score || '-'} | 状态: ${adminStatusText} | 结算状态: ${match.settled ? '已结算' : '未结算'}
                     </div>
                     <div class="bet-details" style="margin-top: 8px;">
                         <div style="display: flex; gap: 8px; align-items: center;">

@@ -181,6 +181,10 @@ POST("/api/bets", withAuth(async (request, env, ctx, user) => {
 			return Response.json({ error: "比赛不存在" }, { status: 404 });
 		}
 		
+		if ((match.d_st2 as string) !== 'wait') {
+			return Response.json({ error: "比赛已开场，无法投注" }, { status: 400 });
+		}
+		
 		if ((match.match_status as string) === 'ended') {
 			return Response.json({ error: "比赛已结束，无法投注" }, { status: 400 });
 		}
@@ -355,7 +359,7 @@ POST("/api/bets/settle/:matchId", async (request, env) => {
 		}
 		
 		batchOperations.push(
-			env.DB.prepare("UPDATE matches SET match_status = 'ended' WHERE id = ?")
+			env.DB.prepare("UPDATE matches SET match_status = 'ended', settled = 1 WHERE id = ?")
 				.bind(matchId)
 		);
 		
@@ -470,6 +474,11 @@ POST("/api/bets/settle-all", async (request, env) => {
 						.bind(bet.user_id, transactionType, payout, userPointsMap.get(bet.user_id) || 0, bet.id, `结算${status === 'won' ? '赢' : status === 'half_win' ? '赢半' : status === 'push' ? '走水' : status === 'half_lose' ? '输半' : '输'} ${matchDetail?.homeTeam} vs ${matchDetail?.awayTeam}`)
 				);
 			}
+			
+			batchOperations.push(
+				env.DB.prepare("UPDATE matches SET settled = 1 WHERE id = ?")
+					.bind(match.id)
+			);
 			
 			await env.DB.batch(batchOperations);
 			totalSettled += bets.length;

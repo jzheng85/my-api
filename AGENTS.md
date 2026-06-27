@@ -153,6 +153,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | d_st_ing | TEXT | 比赛进行中标识（0=未进行，1=进行中） |
 | match_time | TEXT | 比赛时间/开球时间 |
 | match_status | TEXT | 状态（pending/live/ended） |
+| settled | INTEGER | 是否已结算（0=未结算，1=已结算） |
 
 ### point_transactions表（积分流水表）
 
@@ -239,6 +240,7 @@ If the application uses Durable Objects or Workflows, refer to the relevant best
 | `migrations/005_add_match_time.sql` | 给 matches 表添加 match_time 字段 |
 | `migrations/006_create_point_transactions.sql` | 创建 point_transactions 积分流水表 |
 | `migrations/007_add_half_settlement_types.sql` | 添加 settle_half_win、settle_half_lose 交易类型支持走地结算 |
+| `migrations/008_add_settled_field.sql` | 给 matches 表添加 settled 字段，记录比赛是否已结算 |
 
 ### 执行迁移命令
 
@@ -251,6 +253,7 @@ npx wrangler d1 execute my-db --file migrations/004_add_match_status_fields.sql
 npx wrangler d1 execute my-db --file migrations/005_add_match_time.sql
 npx wrangler d1 execute my-db --file migrations/006_create_point_transactions.sql
 npx wrangler d1 execute my-db --file migrations/007_add_half_settlement_types.sql
+npx wrangler d1 execute my-db --file migrations/008_add_settled_field.sql
 
 # 远程数据库
 npx wrangler d1 execute my-db --remote --file migrations/001_initial.sql
@@ -260,4 +263,5 @@ npx wrangler d1 execute my-db --remote --file migrations/004_add_match_status_fi
 npx wrangler d1 execute my-db --remote --file migrations/005_add_match_time.sql
 npx wrangler d1 execute my-db --remote --file migrations/006_create_point_transactions.sql
 npx wrangler d1 execute my-db --remote --file migrations/007_add_half_settlement_types.sql
+npx wrangler d1 execute my-db --remote --file migrations/008_add_settled_field.sql
 ```
