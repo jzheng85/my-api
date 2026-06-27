@@ -118,14 +118,27 @@ function showMainContent() {
 }
 
 function showAlert(message, type) {
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-    document.querySelector('.container').insertBefore(alert, document.querySelector('header'));
+    const overlay = document.createElement('div');
+    overlay.className = 'modal';
     
-    setTimeout(() => {
-        alert.remove();
-    }, 3000);
+    const icon = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+    const title = type === 'success' ? '操作成功' : type === 'error' ? '操作失败' : '提示';
+    const borderColor = type === 'success' ? '#22C55E' : type === 'error' ? '#EF4444' : '#3B82F6';
+    
+    overlay.innerHTML = `
+        <div class="modal-content" style="border-top: 3px solid ${borderColor};">
+            <div class="modal-body" style="text-align: center; padding: 32px 24px;">
+                <div style="font-size: 48px; margin-bottom: 16px;">${icon}</div>
+                <h3 style="margin-bottom: 12px; color: var(--text-primary);">${title}</h3>
+                <p style="color: var(--text-secondary); font-size: 14px;">${message}</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="this.closest('.modal').remove()">确定</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
 }
 
 function switchTab(tab) {
