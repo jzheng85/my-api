@@ -293,6 +293,7 @@ function renderMatches(matches) {
             <div class="match-card">
                 <div class="match-header">
                     <span class="match-league">${match.league}</span>
+                    <span class="match-time">${match.match_time || '时间未知'}</span>
                     <span class="match-status ${statusClass}">
                         ${matchStatusText}
                     </span>
@@ -704,15 +705,18 @@ function renderAdminMatches(matches) {
             adminStatusText = match.match_status === 'ended' ? '已结束' : match.match_status === 'live' ? '进行中' : '未开始';
         }
         
+        const canStart = match.d_st2 === 'wait';
+        
         return `
             <div class="bet-item">
                 <div class="bet-info">
                     <div class="bet-match">${match.homeTeam} vs ${match.awayTeam}</div>
                     <div class="bet-details">
-                        ${match.league} | 当前比分: ${match.score || '-'} | 状态: ${adminStatusText} | 结算状态: ${match.settled ? '已结算' : '未结算'}
+                        ${match.league} | ${match.match_time || '时间未知'} | 当前比分: ${match.score || '-'} | 状态: ${adminStatusText} | 结算状态: ${match.settled ? '已结算' : '未结算'}
                     </div>
                     <div class="bet-details" style="margin-top: 8px;">
                         <div style="display: flex; gap: 8px; align-items: center;">
+                            ${canStart ? `<button class="btn btn-secondary" style="padding: 4px 12px; font-size: 12px;" onclick="startMatch('${match.id}')">开始比赛</button>` : ''}
                             <input type="text" id="adminScore-${match.id}" placeholder="输入比分如 2:1" style="padding: 4px 8px; font-size: 12px; width: 120px;">
                             <button class="btn btn-primary" style="padding: 4px 12px; font-size: 12px;" onclick="settleMatch('${match.id}')">结算比赛</button>
                         </div>
@@ -724,6 +728,26 @@ function renderAdminMatches(matches) {
             </div>
         `;
     }).join('');
+}
+
+async function startMatch(matchId) {
+    try {
+        const response = await apiRequest('/api/admin/start-match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ matchId })
+        });
+
+        if (response.ok) {
+            showAlert('比赛已开始', 'success');
+            loadAdminMatches();
+        } else {
+            const error = await response.json();
+            showAlert(error.error, 'error');
+        }
+    } catch (error) {
+        showAlert('操作失败', 'error');
+    }
 }
 
 async function settleMatch(matchId) {
